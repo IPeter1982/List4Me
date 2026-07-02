@@ -1,0 +1,43 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Node / Vite
+node_modules/
+dist/
+.pnpm-store/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.vite/
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+appsettings.Development.json
+appsettings.Local.json
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+coverage/
+TestResults/
+playwright-report/
+test-results/
+
+# Docker volumes
+pgdata/
