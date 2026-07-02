@@ -1,6 +1,7 @@
 using FluentValidation;
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
+using List4Me.Api.Features.Categories;
 using List4Me.Api.Features.Health;
 using List4Me.Api.Features.Households;
 using Microsoft.EntityFrameworkCore;
@@ -69,6 +70,7 @@ app.UseMiddleware<HouseholdContextMiddleware>();
 app.MapHealth();
 app.MapHouseholds();
 app.MapInvites();
+app.MapCategories();
 
 app.Run();
 
