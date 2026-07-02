@@ -18,8 +18,9 @@ pnpm-debug.log*
 .env
 .env.local
 .env.*.local
-appsettings.Development.json
 appsettings.Local.json
+appsettings.*.Local.json
+appsettings.Secrets.json
 
 # IDE
 .idea/
