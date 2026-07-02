@@ -1,3 +1,4 @@
+using List4Me.Api.Auth;
 using List4Me.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -40,6 +41,7 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddScoped<HouseholdContext>();
 
 var app = builder.Build();
 
@@ -52,6 +54,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<HouseholdContextMiddleware>();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
