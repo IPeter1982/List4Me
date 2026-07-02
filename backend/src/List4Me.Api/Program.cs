@@ -1,5 +1,6 @@
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
+using List4Me.Api.Features.Health;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
@@ -45,6 +46,12 @@ builder.Services.AddScoped<HouseholdContext>();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
@@ -56,7 +63,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<HouseholdContextMiddleware>();
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapHealth();
 
 app.Run();
 
