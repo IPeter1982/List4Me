@@ -11,6 +11,10 @@ public static class HouseholdEndpoints
         group.MapPost("/", CreateHousehold.Handle)
              .AddEndpointFilter<ValidationFilter<CreateHouseholdRequest>>();
 
+        group.MapGet("/me", GetMyHousehold.Handle);
+        group.MapPatch("/me", UpdateHousehold.Handle)
+             .AddEndpointFilter<ValidationFilter<UpdateHouseholdRequest>>();
+
         return app;
     }
 }

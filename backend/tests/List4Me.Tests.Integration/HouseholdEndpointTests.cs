@@ -39,4 +39,43 @@ public class HouseholdEndpointTests(PostgresFixture pg)
 
         resp.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
+
+    [Fact]
+    public async Task GetMe_without_household_returns_404()
+    {
+        await using var factory = new ApiFactory(pg);
+        var client = factory.CreateClientAs("auth0|charlie");
+        var resp = await client.GetAsync("/api/households/me");
+        resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetMe_returns_household_with_members()
+    {
+        await using var factory = new ApiFactory(pg);
+        var client = factory.CreateClientAs("auth0|dana", name: "Dana");
+        await client.PostAsJsonAsync("/api/households", new CreateHouseholdRequest("Dana Home"));
+
+        var resp = await client.GetAsync("/api/households/me");
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var dto = await resp.Content.ReadFromJsonAsync<HouseholdDto>();
+        dto!.Name.Should().Be("Dana Home");
+        dto.Members.Should().ContainSingle(m => m.DisplayName == "Dana");
+    }
+
+    [Fact]
+    public async Task Update_household_name_by_owner_succeeds()
+    {
+        await using var factory = new ApiFactory(pg);
+        var client = factory.CreateClientAs("auth0|eve", name: "Eve");
+        await client.PostAsJsonAsync("/api/households", new CreateHouseholdRequest("Old"));
+
+        var resp = await client.PatchAsJsonAsync("/api/households/me",
+            new UpdateHouseholdRequest("New"));
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var get = await client.GetFromJsonAsync<HouseholdDto>("/api/households/me");
+        get!.Name.Should().Be("New");
+    }
 }
