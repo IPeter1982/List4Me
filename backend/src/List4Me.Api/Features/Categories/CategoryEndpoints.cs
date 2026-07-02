@@ -10,6 +10,9 @@ public static class CategoryEndpoints
         g.MapGet("/", ListCategories.Handle);
         g.MapPost("/", CreateCategory.Handle)
          .AddEndpointFilter<ValidationFilter<CreateCategoryRequest>>();
+        g.MapPatch("/{id:guid}", UpdateCategory.Handle)
+         .AddEndpointFilter<ValidationFilter<UpdateCategoryRequest>>();
+        g.MapDelete("/{id:guid}", DeleteCategory.Handle);
         return app;
     }
 }

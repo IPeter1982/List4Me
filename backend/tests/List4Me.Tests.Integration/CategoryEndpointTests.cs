@@ -90,4 +90,69 @@ public class CategoryEndpointTests(PostgresFixture pg)
 
         resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
+
+    [Fact]
+    public async Task Update_category_changes_name_and_icon_and_label()
+    {
+        await using var factory = new ApiFactory(pg);
+        var client = await HouseholdClient(factory, "auth0|cat-u", "U");
+        var created = await (await client.PostAsJsonAsync("/api/categories",
+            new CreateCategoryRequest("Old", "shopping-cart", null, "K"))).Content.ReadFromJsonAsync<CategoryDto>();
+
+        var resp = await client.PatchAsJsonAsync($"/api/categories/{created!.Id}",
+            new UpdateCategoryRequest("New", "apple", "Megvettem", 5));
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var items = await client.GetFromJsonAsync<CategoryDto[]>("/api/categories");
+        items.Should().ContainSingle();
+        items![0].Name.Should().Be("New");
+        items[0].IconKey.Should().Be("apple");
+        items[0].CompletedLabel.Should().Be("Megvettem");
+    }
+
+    [Fact]
+    public async Task Delete_empty_category_soft_deletes()
+    {
+        await using var factory = new ApiFactory(pg);
+        var client = await HouseholdClient(factory, "auth0|cat-del", "D");
+        var created = await (await client.PostAsJsonAsync("/api/categories",
+            new CreateCategoryRequest("X", "shopping-cart", null, null))).Content.ReadFromJsonAsync<CategoryDto>();
+
+        var resp = await client.DeleteAsync($"/api/categories/{created!.Id}");
+        resp.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var items = await client.GetFromJsonAsync<CategoryDto[]>("/api/categories");
+        items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Delete_category_with_subcategories_without_force_returns_409()
+    {
+        await using var factory = new ApiFactory(pg);
+        var client = await HouseholdClient(factory, "auth0|cat-df", "F");
+        var parent = await (await client.PostAsJsonAsync("/api/categories",
+            new CreateCategoryRequest("P", "shopping-cart", null, null))).Content.ReadFromJsonAsync<CategoryDto>();
+        await client.PostAsJsonAsync("/api/categories",
+            new CreateCategoryRequest("C", "cookie", parent!.Id, null));
+
+        var resp = await client.DeleteAsync($"/api/categories/{parent.Id}");
+        resp.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task Delete_category_with_force_cascades_subcategories()
+    {
+        await using var factory = new ApiFactory(pg);
+        var client = await HouseholdClient(factory, "auth0|cat-dc", "C");
+        var parent = await (await client.PostAsJsonAsync("/api/categories",
+            new CreateCategoryRequest("P", "shopping-cart", null, null))).Content.ReadFromJsonAsync<CategoryDto>();
+        await client.PostAsJsonAsync("/api/categories",
+            new CreateCategoryRequest("Sub", "cookie", parent!.Id, null));
+
+        var resp = await client.DeleteAsync($"/api/categories/{parent.Id}?force=true");
+        resp.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var items = await client.GetFromJsonAsync<CategoryDto[]>("/api/categories");
+        items.Should().BeEmpty();
+    }
 }
