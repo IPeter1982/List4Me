@@ -78,4 +78,45 @@ public class HouseholdEndpointTests(PostgresFixture pg)
         var get = await client.GetFromJsonAsync<HouseholdDto>("/api/households/me");
         get!.Name.Should().Be("New");
     }
+
+    [Fact]
+    public async Task Owner_can_create_invite_and_second_user_can_accept()
+    {
+        await using var factory = new ApiFactory(pg);
+        var owner = factory.CreateClientAs("auth0|owner", name: "Owner");
+        await owner.PostAsJsonAsync("/api/households", new CreateHouseholdRequest("Home"));
+
+        var inviteResp = await owner.PostAsJsonAsync("/api/households/me/invites",
+            new CreateInviteRequest(Email: null));
+        inviteResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var invite = await inviteResp.Content.ReadFromJsonAsync<InviteDto>();
+
+        var newbie = factory.CreateClientAs("auth0|newbie", name: "Newbie");
+        var infoResp = await newbie.GetAsync($"/api/invites/{invite!.Token}");
+        infoResp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var info = await infoResp.Content.ReadFromJsonAsync<InviteInfoDto>();
+        info!.HouseholdName.Should().Be("Home");
+
+        var accept = await newbie.PostAsync($"/api/invites/{invite.Token}/accept", null);
+        accept.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var me = await newbie.GetFromJsonAsync<HouseholdDto>("/api/households/me");
+        me!.Members.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task Non_owner_cannot_create_invite()
+    {
+        await using var factory = new ApiFactory(pg);
+        var owner = factory.CreateClientAs("auth0|o2", name: "O");
+        await owner.PostAsJsonAsync("/api/households", new CreateHouseholdRequest("H"));
+        var invite = await (await owner.PostAsJsonAsync("/api/households/me/invites",
+            new CreateInviteRequest(null))).Content.ReadFromJsonAsync<InviteDto>();
+        var member = factory.CreateClientAs("auth0|m2", name: "M");
+        await member.PostAsync($"/api/invites/{invite!.Token}/accept", null);
+
+        var resp = await member.PostAsJsonAsync("/api/households/me/invites",
+            new CreateInviteRequest(null));
+        resp.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
 }

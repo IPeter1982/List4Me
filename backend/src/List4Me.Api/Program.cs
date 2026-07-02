@@ -68,6 +68,7 @@ app.UseMiddleware<HouseholdContextMiddleware>();
 
 app.MapHealth();
 app.MapHouseholds();
+app.MapInvites();
 
 app.Run();
 
