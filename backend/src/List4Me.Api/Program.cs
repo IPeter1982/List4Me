@@ -1,3 +1,4 @@
+using FluentValidation;
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
 using List4Me.Api.Features.Health;
@@ -43,6 +44,7 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<HouseholdContext>();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var app = builder.Build();
 
