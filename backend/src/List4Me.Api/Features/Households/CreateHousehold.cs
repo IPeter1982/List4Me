@@ -1,6 +1,7 @@
 using FluentValidation;
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
+using List4Me.Api.Data.Seed;
 using List4Me.Api.Domain;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,6 +40,7 @@ public static class CreateHousehold
 
         db.Households.Add(household);
         db.HouseholdMembers.Add(member);
+        DefaultSeed.Apply(db, household.Id);
         await db.SaveChangesAsync();
 
         var dto = new HouseholdDto(household.Id, household.Name, household.CreatedAt,

@@ -18,11 +18,19 @@ public class CategoryEndpointTests(PostgresFixture pg)
         return client;
     }
 
+    private static async Task ClearCategories(HttpClient client)
+    {
+        var items = await client.GetFromJsonAsync<CategoryDto[]>("/api/categories");
+        foreach (var c in items!)
+            await client.DeleteAsync($"/api/categories/{c.Id}?force=true");
+    }
+
     [Fact]
     public async Task List_returns_empty_when_no_categories()
     {
         await using var factory = new ApiFactory(pg);
         var client = await HouseholdClient(factory, "auth0|cat-a", "A");
+        await ClearCategories(client);
 
         var items = await client.GetFromJsonAsync<CategoryDto[]>("/api/categories");
 
@@ -34,6 +42,7 @@ public class CategoryEndpointTests(PostgresFixture pg)
     {
         await using var factory = new ApiFactory(pg);
         var client = await HouseholdClient(factory, "auth0|cat-b", "B");
+        await ClearCategories(client);
 
         var resp = await client.PostAsJsonAsync("/api/categories",
             new CreateCategoryRequest("Bevásárlás", "shopping-cart", null, "Megvettem"));
@@ -49,6 +58,7 @@ public class CategoryEndpointTests(PostgresFixture pg)
     {
         await using var factory = new ApiFactory(pg);
         var client = await HouseholdClient(factory, "auth0|cat-c", "C");
+        await ClearCategories(client);
 
         var parentResp = await client.PostAsJsonAsync("/api/categories",
             new CreateCategoryRequest("Bevásárlás", "shopping-cart", null, null));
@@ -68,6 +78,7 @@ public class CategoryEndpointTests(PostgresFixture pg)
     {
         await using var factory = new ApiFactory(pg);
         var client = await HouseholdClient(factory, "auth0|cat-d", "D");
+        await ClearCategories(client);
         var parent = await (await client.PostAsJsonAsync("/api/categories",
             new CreateCategoryRequest("P", "shopping-cart", null, null))).Content.ReadFromJsonAsync<CategoryDto>();
         var child = await (await client.PostAsJsonAsync("/api/categories",
@@ -84,6 +95,7 @@ public class CategoryEndpointTests(PostgresFixture pg)
     {
         await using var factory = new ApiFactory(pg);
         var client = await HouseholdClient(factory, "auth0|cat-e", "E");
+        await ClearCategories(client);
 
         var resp = await client.PostAsJsonAsync("/api/categories",
             new CreateCategoryRequest("X", "not-a-real-icon", null, null));
@@ -96,6 +108,7 @@ public class CategoryEndpointTests(PostgresFixture pg)
     {
         await using var factory = new ApiFactory(pg);
         var client = await HouseholdClient(factory, "auth0|cat-u", "U");
+        await ClearCategories(client);
         var created = await (await client.PostAsJsonAsync("/api/categories",
             new CreateCategoryRequest("Old", "shopping-cart", null, "K"))).Content.ReadFromJsonAsync<CategoryDto>();
 
@@ -115,6 +128,7 @@ public class CategoryEndpointTests(PostgresFixture pg)
     {
         await using var factory = new ApiFactory(pg);
         var client = await HouseholdClient(factory, "auth0|cat-del", "D");
+        await ClearCategories(client);
         var created = await (await client.PostAsJsonAsync("/api/categories",
             new CreateCategoryRequest("X", "shopping-cart", null, null))).Content.ReadFromJsonAsync<CategoryDto>();
 
@@ -130,6 +144,7 @@ public class CategoryEndpointTests(PostgresFixture pg)
     {
         await using var factory = new ApiFactory(pg);
         var client = await HouseholdClient(factory, "auth0|cat-df", "F");
+        await ClearCategories(client);
         var parent = await (await client.PostAsJsonAsync("/api/categories",
             new CreateCategoryRequest("P", "shopping-cart", null, null))).Content.ReadFromJsonAsync<CategoryDto>();
         await client.PostAsJsonAsync("/api/categories",
@@ -144,6 +159,7 @@ public class CategoryEndpointTests(PostgresFixture pg)
     {
         await using var factory = new ApiFactory(pg);
         var client = await HouseholdClient(factory, "auth0|cat-dc", "C");
+        await ClearCategories(client);
         var parent = await (await client.PostAsJsonAsync("/api/categories",
             new CreateCategoryRequest("P", "shopping-cart", null, null))).Content.ReadFromJsonAsync<CategoryDto>();
         await client.PostAsJsonAsync("/api/categories",
@@ -154,5 +170,19 @@ public class CategoryEndpointTests(PostgresFixture pg)
 
         var items = await client.GetFromJsonAsync<CategoryDto[]>("/api/categories");
         items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task New_household_has_4_default_top_level_categories()
+    {
+        await using var factory = new ApiFactory(pg);
+        var client = await HouseholdClient(factory, "auth0|seed-a", "Seed");
+
+        var items = await client.GetFromJsonAsync<CategoryDto[]>("/api/categories");
+        items!.Select(c => c.Name).Should().BeEquivalentTo(
+            new[] { "Bevásárlás", "Hűtő", "Fagyasztó", "Nyaralás" });
+        items.First(c => c.Name == "Bevásárlás").Subcategories.Should().NotBeEmpty();
+        items.First(c => c.Name == "Bevásárlás").CompletedLabel.Should().Be("Megvettem");
+        items.First(c => c.Name == "Hűtő").CompletedLabel.Should().Be("Elfogyott");
     }
 }
