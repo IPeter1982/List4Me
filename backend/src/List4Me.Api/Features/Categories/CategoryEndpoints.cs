@@ -8,6 +8,8 @@ public static class CategoryEndpoints
     {
         var g = app.MapGroup("/api/categories").RequireAuthorization();
         g.MapGet("/", ListCategories.Handle);
+        g.MapPost("/", CreateCategory.Handle)
+         .AddEndpointFilter<ValidationFilter<CreateCategoryRequest>>();
         return app;
     }
 }
