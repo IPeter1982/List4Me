@@ -6,10 +6,11 @@ import { OnboardingHousehold } from "@/auth/OnboardingHousehold"
 import { PageShell } from "@/components/PageShell"
 import { ApiError } from "@/lib/api"
 import { CategoryListScreen } from "@/features/categories/CategoryList"
+import { HouseholdSettingsScreen } from "@/features/household/HouseholdSettings"
+import { InviteAcceptPage } from "@/features/household/InviteAcceptPage"
 
 function ListsScreen() { return <PageShell title="Listák"><div>Listák jönnek.</div></PageShell> }
 function TemplatesScreen() { return <PageShell title="Sablonok"><div>Sablonok jönnek.</div></PageShell> }
-function SettingsScreen() { return <PageShell title="Beállítások"><div>Beállítások jönnek.</div></PageShell> }
 
 function OnboardingGate({ children }: { children: ReactNode }) {
   const { data, isLoading, error } = useQuery({
@@ -25,13 +26,14 @@ function OnboardingGate({ children }: { children: ReactNode }) {
 }
 
 const router = createBrowserRouter([
+  { path: "/invite/:token", element: <InviteAcceptPage /> },
   {
     element: <OnboardingGate><Outlet /></OnboardingGate>,
     children: [
       { path: "/", element: <CategoryListScreen /> },
       { path: "/lists", element: <ListsScreen /> },
       { path: "/templates", element: <TemplatesScreen /> },
-      { path: "/settings", element: <SettingsScreen /> },
+      { path: "/settings", element: <HouseholdSettingsScreen /> },
       { path: "*", element: <Navigate to="/" replace /> }
     ]
   }
