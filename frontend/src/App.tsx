@@ -1,9 +1,10 @@
 import { AuthGate } from "@/auth/AuthGate"
+import { AppRouter } from "@/router"
 
 export default function App() {
   return (
     <AuthGate>
-      <div className="p-6">Bejelentkezve.</div>
+      <AppRouter />
     </AuthGate>
   )
 }
