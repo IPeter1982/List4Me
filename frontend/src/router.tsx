@@ -5,8 +5,8 @@ import { householdApi } from "@/features/household/api"
 import { OnboardingHousehold } from "@/auth/OnboardingHousehold"
 import { PageShell } from "@/components/PageShell"
 import { ApiError } from "@/lib/api"
+import { CategoryListScreen } from "@/features/categories/CategoryList"
 
-function CategoriesScreen() { return <PageShell title="Kategóriák"><div>Kategóriák jönnek.</div></PageShell> }
 function ListsScreen() { return <PageShell title="Listák"><div>Listák jönnek.</div></PageShell> }
 function TemplatesScreen() { return <PageShell title="Sablonok"><div>Sablonok jönnek.</div></PageShell> }
 function SettingsScreen() { return <PageShell title="Beállítások"><div>Beállítások jönnek.</div></PageShell> }
@@ -28,7 +28,7 @@ const router = createBrowserRouter([
   {
     element: <OnboardingGate><Outlet /></OnboardingGate>,
     children: [
-      { path: "/", element: <CategoriesScreen /> },
+      { path: "/", element: <CategoryListScreen /> },
       { path: "/lists", element: <ListsScreen /> },
       { path: "/templates", element: <TemplatesScreen /> },
       { path: "/settings", element: <SettingsScreen /> },
