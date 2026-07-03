@@ -35,8 +35,8 @@ export function OnboardingHousehold() {
 
         {tab === "create" ? (
           <div className="space-y-3">
-            <label className="block text-sm">Háztartás neve</label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Pl. Kovács család" />
+            <label htmlFor="household-name" className="block text-sm">Háztartás neve</label>
+            <Input id="household-name" value={name} onChange={e => setName(e.target.value)} placeholder="Pl. Kovács család" />
             <Button
               onClick={() => create.mutate()}
               disabled={!name.trim() || create.isPending}
@@ -46,8 +46,8 @@ export function OnboardingHousehold() {
           </div>
         ) : (
           <div className="space-y-3">
-            <label className="block text-sm">Meghívó token vagy URL</label>
-            <Input value={token} onChange={e => {
+            <label htmlFor="invite-token" className="block text-sm">Meghívó token vagy URL</label>
+            <Input id="invite-token" value={token} onChange={e => {
               const v = e.target.value.trim()
               const match = v.match(/([0-9a-f-]{36})$/i)
               setToken(match ? match[1] : v)
