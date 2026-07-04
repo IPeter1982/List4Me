@@ -48,6 +48,12 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<HouseholdContext>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+var allowedOrigin = builder.Configuration["AllowedOrigin"] ?? "http://localhost:5173";
+builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
+    .WithOrigins(allowedOrigin)
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -63,6 +69,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<HouseholdContextMiddleware>();
