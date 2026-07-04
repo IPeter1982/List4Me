@@ -2,6 +2,17 @@
 
 Kategorizált listakezelő háztartásoknak. Monorepo: `/backend` (.NET 10 Minimal API + EF Core), `/frontend` (React + Vite + TS + Tailwind).
 
+## Aktuális állapot
+
+**Plan 1 (Foundation + Households + Categories) kész** — branch: `plan1-foundation`, PR: [github.com/IPeter1982/List4Me/pulls](https://github.com/IPeter1982/List4Me/pulls).
+
+- ✅ Backend: 20/20 integrációs teszt zöld (Testcontainers Postgres 17)
+- ✅ Frontend: tiszta build (608 KB / gzip 189 KB)
+- ✅ Auth0 login → onboarding (új háztartás / meghívó) → 4-fülű shell → kategória CRUD + IconPicker (62 Lucide ikon) + kaszkádolt törlés
+- ⏳ Kézi smoke a lenti checklist alapján (Auth0 tenant + `.env.local` szükséges)
+
+Következő: **Plan 2** — Products + Lists + Templates. Részletek és eltérések a tervhez képest: `docs/superpowers/plans/2026-07-02-list4me-plan1-foundation.md` → *Completion log*.
+
 ## Előfeltételek
 
 - .NET 10 SDK (10.0.301+)
