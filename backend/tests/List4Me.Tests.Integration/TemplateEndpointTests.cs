@@ -96,4 +96,27 @@ public class TemplateEndpointTests(PostgresFixture pg)
         newList!.Items.Should().HaveCount(2);
         newList.FromTemplateId.Should().Be(templateId);
     }
+
+    [Fact]
+    public async Task Get_template_returns_detail_with_items()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|tpl-e", "E");
+        var products = await client.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{categoryId}/products");
+
+        var srcResp = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("Src", categoryId, null));
+        var srcId = (await srcResp.Content.ReadFromJsonAsync<ListDetailDto>())!.Id;
+        await client.PostAsJsonAsync($"/api/lists/{srcId}/items",
+            new CreateListItemRequest(products![0].Id, 1m, "db", null, null));
+
+        var tplResp = await client.PostAsJsonAsync("/api/templates",
+            new CreateTemplateRequest("T", categoryId, srcId));
+        var tplId = (await tplResp.Content.ReadFromJsonAsync<TemplateDetailDto>())!.Id;
+
+        var detail = await client.GetFromJsonAsync<TemplateDetailDto>($"/api/templates/{tplId}");
+        detail!.Items.Should().HaveCount(1);
+        detail.Items[0].ProductName.Should().Be(products[0].Name);
+    }
 }

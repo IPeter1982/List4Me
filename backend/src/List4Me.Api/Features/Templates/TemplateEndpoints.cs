@@ -10,6 +10,7 @@ public static class TemplateEndpoints
         g.MapGet("/", ListTemplates.Handle);
         g.MapPost("/", CreateTemplate.Handle)
             .AddEndpointFilter<ValidationFilter<CreateTemplateRequest>>();
+        g.MapGet("/{id:guid}", GetTemplate.Handle);
         return app;
     }
 }
