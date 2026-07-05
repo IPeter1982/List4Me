@@ -176,4 +176,33 @@ public class ProductEndpointTests(PostgresFixture pg)
             $"/api/categories/{categoryId}/products?favoritesOnly=true");
         aliceFav.Should().HaveCount(1);
     }
+
+    [Fact]
+    public async Task Products_are_isolated_across_households()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (aliceClient, aliceCatId) = await Setup(factory, "auth0|prod-iso-a", "Alice");
+        var (bobClient, bobCatId) = await Setup(factory, "auth0|prod-iso-b", "Bob");
+
+        var aliceCreate = await aliceClient.PostAsJsonAsync(
+            $"/api/categories/{aliceCatId}/products",
+            new CreateProductRequest("SecretProduct", null, null));
+        var aliceProduct = await aliceCreate.Content.ReadFromJsonAsync<ProductDto>();
+
+        var bobList = await bobClient.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{bobCatId}/products?q=Secret");
+        bobList.Should().BeEmpty();
+
+        var bobPatch = await bobClient.PatchAsJsonAsync(
+            $"/api/products/{aliceProduct!.Id}",
+            new UpdateProductRequest("Hijacked", null, null));
+        bobPatch.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var bobFav = await bobClient.PostAsync(
+            $"/api/products/{aliceProduct.Id}/favorite", content: null);
+        bobFav.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var bobDel = await bobClient.DeleteAsync($"/api/products/{aliceProduct.Id}");
+        bobDel.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }
