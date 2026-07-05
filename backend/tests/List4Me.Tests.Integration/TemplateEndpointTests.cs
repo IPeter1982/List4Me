@@ -119,4 +119,38 @@ public class TemplateEndpointTests(PostgresFixture pg)
         detail!.Items.Should().HaveCount(1);
         detail.Items[0].ProductName.Should().Be(products[0].Name);
     }
+
+    [Fact]
+    public async Task Delete_template_removes_it_from_list()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|tpl-f", "F");
+        var tplResp = await client.PostAsJsonAsync("/api/templates",
+            new CreateTemplateRequest("Doomed", categoryId, null));
+        var id = (await tplResp.Content.ReadFromJsonAsync<TemplateDetailDto>())!.Id;
+
+        var del = await client.DeleteAsync($"/api/templates/{id}");
+        del.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var all = await client.GetFromJsonAsync<TemplateSummaryDto[]>("/api/templates");
+        all.Should().NotContain(t => t.Id == id);
+    }
+
+    [Fact]
+    public async Task Templates_are_isolated_across_households()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (aliceClient, aliceCat) = await Setup(factory, "auth0|tpl-iso-a", "Alice");
+        var (bobClient, _) = await Setup(factory, "auth0|tpl-iso-b", "Bob");
+        var aliceResp = await aliceClient.PostAsJsonAsync("/api/templates",
+            new CreateTemplateRequest("A", aliceCat, null));
+        var aliceId = (await aliceResp.Content.ReadFromJsonAsync<TemplateDetailDto>())!.Id;
+
+        (await bobClient.GetAsync($"/api/templates/{aliceId}"))
+            .StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await bobClient.DeleteAsync($"/api/templates/{aliceId}"))
+            .StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await bobClient.GetFromJsonAsync<TemplateSummaryDto[]>("/api/templates"))
+            .Should().NotContain(t => t.Id == aliceId);
+    }
 }

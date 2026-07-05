@@ -11,6 +11,7 @@ public static class TemplateEndpoints
         g.MapPost("/", CreateTemplate.Handle)
             .AddEndpointFilter<ValidationFilter<CreateTemplateRequest>>();
         g.MapGet("/{id:guid}", GetTemplate.Handle);
+        g.MapDelete("/{id:guid}", DeleteTemplate.Handle);
         return app;
     }
 }
