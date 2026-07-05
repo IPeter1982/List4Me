@@ -7,7 +7,8 @@ public static class ListEndpoints
     public static IEndpointRouteBuilder MapLists(this IEndpointRouteBuilder app)
     {
         var lists = app.MapGroup("/api/lists").RequireAuthorization();
-        // Handlers wired progressively in tasks C2 - C6.
+        lists.MapGet("/", ListLists.Handle);
+        // Remaining handlers wired progressively in tasks C3 - C6.
 
         var items = app.MapGroup("/api/lists/{listId:guid}/items").RequireAuthorization();
         // Handlers wired in Phase D.
