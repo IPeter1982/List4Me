@@ -20,6 +20,8 @@ public static class ListEndpoints
             .AddEndpointFilter<ValidationFilter<CreateListItemRequest>>();
         items.MapPatch("/{itemId:guid}", UpdateListItem.Handle)
             .AddEndpointFilter<ValidationFilter<UpdateListItemRequest>>();
+        items.MapPost("/{itemId:guid}/complete", ToggleListItemComplete.Complete);
+        items.MapPost("/{itemId:guid}/uncomplete", ToggleListItemComplete.Uncomplete);
         return app;
     }
 }

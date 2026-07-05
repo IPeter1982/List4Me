@@ -78,4 +78,30 @@ public class ListItemEndpointTests(PostgresFixture pg)
         updated.ExpiresOn.Should().Be(new DateOnly(2027, 1, 1));
         updated.Note.Should().Be("más");
     }
+
+    [Fact]
+    public async Task Complete_item_sets_flag_completed_by_and_uncomplete_reverses()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, _, listId, productId) = await Setup(factory, "auth0|itm-c", "C");
+        var addResp = await client.PostAsJsonAsync($"/api/lists/{listId}/items",
+            new CreateListItemRequest(productId, null, null, null, null));
+        var added = await addResp.Content.ReadFromJsonAsync<ListItemDto>();
+
+        var comp = await client.PostAsync(
+            $"/api/lists/{listId}/items/{added!.Id}/complete", content: null);
+        comp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var completed = await comp.Content.ReadFromJsonAsync<ListItemDto>();
+        completed!.IsCompleted.Should().BeTrue();
+        completed.CompletedAt.Should().NotBeNull();
+        completed.CompletedByMemberId.Should().NotBeNull();
+
+        var uncomp = await client.PostAsync(
+            $"/api/lists/{listId}/items/{added.Id}/uncomplete", content: null);
+        uncomp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var reverted = await uncomp.Content.ReadFromJsonAsync<ListItemDto>();
+        reverted!.IsCompleted.Should().BeFalse();
+        reverted.CompletedAt.Should().BeNull();
+        reverted.CompletedByMemberId.Should().BeNull();
+    }
 }
