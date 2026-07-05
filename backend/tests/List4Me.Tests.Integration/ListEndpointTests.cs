@@ -31,4 +31,31 @@ public class ListEndpointTests(PostgresFixture pg)
         var items = await client.GetFromJsonAsync<ListSummaryDto[]>("/api/lists");
         items.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task Create_empty_list_returns_201_and_appears_in_list()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|lst-b", "B");
+
+        var resp = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("Hétfő", categoryId, null));
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await resp.Content.ReadFromJsonAsync<ListDetailDto>();
+        created!.Items.Should().BeEmpty();
+
+        var all = await client.GetFromJsonAsync<ListSummaryDto[]>("/api/lists");
+        all.Should().ContainSingle(l => l.Id == created.Id);
+    }
+
+    [Fact]
+    public async Task Create_list_rejects_unknown_category()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, _) = await Setup(factory, "auth0|lst-c", "C");
+
+        var resp = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("X", Guid.NewGuid(), null));
+        resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }
