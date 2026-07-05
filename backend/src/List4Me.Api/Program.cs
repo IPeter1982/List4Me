@@ -6,6 +6,7 @@ using List4Me.Api.Features.Health;
 using List4Me.Api.Features.Households;
 using List4Me.Api.Features.Lists;
 using List4Me.Api.Features.Products;
+using List4Me.Api.Features.Templates;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
@@ -82,6 +83,7 @@ app.MapInvites();
 app.MapCategories();
 app.MapProducts();
 app.MapLists();
+app.MapTemplates();
 
 app.Run();
 
