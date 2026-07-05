@@ -73,4 +73,39 @@ public class ListEndpointTests(PostgresFixture pg)
         detail!.Id.Should().Be(listId);
         detail.Items.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task Update_list_renames_it()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|lst-e", "E");
+        var create = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("Old", categoryId, null));
+        var id = (await create.Content.ReadFromJsonAsync<ListDetailDto>())!.Id;
+
+        var patch = await client.PatchAsJsonAsync($"/api/lists/{id}",
+            new UpdateListRequest("New", null));
+        patch.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var detail = await client.GetFromJsonAsync<ListDetailDto>($"/api/lists/{id}");
+        detail!.Name.Should().Be("New");
+    }
+
+    [Fact]
+    public async Task Archive_list_hides_from_default_query_but_appears_when_archived_true()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|lst-f", "F");
+        var create = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("ToArchive", categoryId, null));
+        var id = (await create.Content.ReadFromJsonAsync<ListDetailDto>())!.Id;
+
+        await client.PatchAsJsonAsync($"/api/lists/{id}", new UpdateListRequest(null, true));
+
+        var active = await client.GetFromJsonAsync<ListSummaryDto[]>("/api/lists");
+        active.Should().NotContain(l => l.Id == id);
+
+        var archived = await client.GetFromJsonAsync<ListSummaryDto[]>("/api/lists?archived=true");
+        archived.Should().ContainSingle(l => l.Id == id && l.ArchivedAt != null);
+    }
 }

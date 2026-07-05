@@ -11,7 +11,9 @@ public static class ListEndpoints
         lists.MapPost("/", CreateList.Handle)
             .AddEndpointFilter<ValidationFilter<CreateListRequest>>();
         lists.MapGet("/{id:guid}", GetList.Handle);
-        // Remaining handlers wired progressively in tasks C5 - C6.
+        lists.MapPatch("/{id:guid}", UpdateList.Handle)
+            .AddEndpointFilter<ValidationFilter<UpdateListRequest>>();
+        // Remaining handlers wired progressively in task C6.
 
         var items = app.MapGroup("/api/lists/{listId:guid}/items").RequireAuthorization();
         // Handlers wired in Phase D.
