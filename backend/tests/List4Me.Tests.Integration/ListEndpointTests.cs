@@ -130,4 +130,26 @@ public class ListEndpointTests(PostgresFixture pg)
         var get = await client.GetAsync($"/api/lists/{id}");
         get.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task Lists_are_isolated_across_households()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (aliceClient, aliceCat) = await Setup(factory, "auth0|lst-iso-a", "Alice");
+        var (bobClient, _) = await Setup(factory, "auth0|lst-iso-b", "Bob");
+
+        var aliceCreate = await aliceClient.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("AliceList", aliceCat, null));
+        var aliceListId = (await aliceCreate.Content.ReadFromJsonAsync<ListDetailDto>())!.Id;
+
+        (await bobClient.GetAsync($"/api/lists/{aliceListId}"))
+            .StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        (await bobClient.PatchAsJsonAsync($"/api/lists/{aliceListId}",
+            new UpdateListRequest("Hijacked", null)))
+            .StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        (await bobClient.DeleteAsync($"/api/lists/{aliceListId}"))
+            .StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }
