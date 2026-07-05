@@ -12,7 +12,8 @@ public static class ProductEndpoints
             .AddEndpointFilter<ValidationFilter<CreateProductRequest>>();
 
         var byId = app.MapGroup("/api/products/{id:guid}").RequireAuthorization();
-        // Handlers wired in tasks B4-B6.
+        byId.MapPatch("/", UpdateProduct.Handle)
+            .AddEndpointFilter<ValidationFilter<UpdateProductRequest>>();
         return app;
     }
 }

@@ -96,4 +96,24 @@ public class ProductEndpointTests(PostgresFixture pg)
 
         resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
+
+    [Fact]
+    public async Task Update_product_changes_name_and_unit()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|prod-f", "F");
+
+        var create = await client.PostAsJsonAsync($"/api/categories/{categoryId}/products",
+            new CreateProductRequest("Kenyér", 1m, "db"));
+        var created = await create.Content.ReadFromJsonAsync<ProductDto>();
+
+        var patch = await client.PatchAsJsonAsync($"/api/products/{created!.Id}",
+            new UpdateProductRequest("Rozs kenyér", 500m, "g"));
+        patch.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var updated = await patch.Content.ReadFromJsonAsync<ProductDto>();
+        updated!.Name.Should().Be("Rozs kenyér");
+        updated.DefaultQuantity.Should().Be(500m);
+        updated.DefaultUnit.Should().Be("g");
+    }
 }
