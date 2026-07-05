@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api"
 import { CategoryListScreen } from "@/features/categories/CategoryList"
 import { HouseholdSettingsScreen } from "@/features/household/HouseholdSettings"
 import { InviteAcceptPage } from "@/features/household/InviteAcceptPage"
+import { ProductList } from "@/features/products/ProductList"
 
 function ListsScreen() { return <PageShell title="Listák"><div>Listák jönnek.</div></PageShell> }
 function TemplatesScreen() { return <PageShell title="Sablonok"><div>Sablonok jönnek.</div></PageShell> }
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
       { path: "/", element: <CategoryListScreen /> },
       { path: "/lists", element: <ListsScreen /> },
       { path: "/templates", element: <TemplatesScreen /> },
+      { path: "/categories/:id/products", element: <ProductList /> },
       { path: "/settings", element: <HouseholdSettingsScreen /> },
       { path: "*", element: <Navigate to="/" replace /> }
     ]
