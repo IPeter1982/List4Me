@@ -9,8 +9,9 @@ import { CategoryListScreen } from "@/features/categories/CategoryList"
 import { HouseholdSettingsScreen } from "@/features/household/HouseholdSettings"
 import { InviteAcceptPage } from "@/features/household/InviteAcceptPage"
 import { ProductList } from "@/features/products/ProductList"
+import { ListsOverview } from "@/features/lists/ListsOverview"
+import { ListView } from "@/features/lists/ListView"
 
-function ListsScreen() { return <PageShell title="Listák"><div>Listák jönnek.</div></PageShell> }
 function TemplatesScreen() { return <PageShell title="Sablonok"><div>Sablonok jönnek.</div></PageShell> }
 
 function OnboardingGate({ children }: { children: ReactNode }) {
@@ -32,7 +33,8 @@ const router = createBrowserRouter([
     element: <OnboardingGate><Outlet /></OnboardingGate>,
     children: [
       { path: "/", element: <CategoryListScreen /> },
-      { path: "/lists", element: <ListsScreen /> },
+      { path: "/lists", element: <ListsOverview /> },
+      { path: "/lists/:id", element: <ListView /> },
       { path: "/templates", element: <TemplatesScreen /> },
       { path: "/categories/:id/products", element: <ProductList /> },
       { path: "/settings", element: <HouseholdSettingsScreen /> },
