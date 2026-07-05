@@ -1,15 +1,23 @@
 import { api } from "@/lib/api"
+import type {
+  CreateTemplateRequest, TemplateDetailDto, TemplateSummaryDto,
+} from "./types"
 
-export type TemplateSummaryDto = {
-  id: string
-  categoryId: string
-  name: string
-  createdByMemberId: string
-  itemCount: number
-  createdAt: string
+function listQuery(params?: { categoryId?: string }) {
+  return params?.categoryId ? `?categoryId=${params.categoryId}` : ""
 }
 
 export const templatesApi = {
-  // Filled in Phase H; return empty so NewListDialog compiles.
-  list: (_params?: { categoryId?: string }) => api<TemplateSummaryDto[]>("/api/templates"),
+  list: (params?: { categoryId?: string }) =>
+    api<TemplateSummaryDto[]>(`/api/templates${listQuery(params)}`),
+  create: (body: CreateTemplateRequest) =>
+    api<TemplateDetailDto>("/api/templates", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  get: (id: string) => api<TemplateDetailDto>(`/api/templates/${id}`),
+  remove: (id: string) => api<void>(`/api/templates/${id}`, { method: "DELETE" }),
 }
+
+// Legacy alias so existing imports continue to work.
+export type { TemplateSummaryDto }
