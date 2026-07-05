@@ -4178,6 +4178,36 @@ git commit -m "docs: README with quickstart and testing instructions"
 - **Plan 2:** Products CRUD + favorites, Lists + ListItems (with swipe), Templates
 - **Plan 3:** SignalR realtime, Playwright E2E suite, Docker + Railway deploy, CI/CD workflows
 
+---
+
+## Completion log (2026-07-04)
+
+**Status:** All 41 tasks (A1 → H2) complete. Branch `plan1-foundation` pushed to `origin`, PR open against `main`.
+
+**Verification:**
+
+- Backend: `dotnet test backend/List4Me.slnx` → **20/20 pass** in ~16s (Testcontainers Postgres 17).
+- Frontend: `pnpm --filter frontend build` → clean build, 608 KB bundle (189 KB gzipped).
+- 39 commits across the branch, each reviewed by a two-stage subagent pass (spec compliance + code quality).
+
+**Deviations from the plan (documented for future planners):**
+
+- **Backend port:** Kestrel binds to `http://localhost:5058` (from `launchSettings.json`), not `:5000` as some snippets assumed. `frontend/src/lib/api.ts` fallback and `.env.local.example` corrected to `:5058`.
+- **Postgres port:** `docker-compose.yml` maps `5433:5432` to avoid clashing with a local PG18 instance on `:5432`. README quickstart reflects this.
+- **Solution file:** .NET 10 defaults to `.slnx` (XML) — commands use `backend/List4Me.slnx`, not `.sln`.
+- **`Screwdriver` icon:** Not exported by the installed `lucide-react` version. Fallback: `"screwdriver": Wrench` in `frontend/src/lib/icons.ts`. The kebab-case key is preserved to match `backend/.../IconKeys.cs`.
+- **`erasableSyntaxOnly` incompatibility:** TS parameter properties (`constructor(public status, ...)`) don't compile under this repo's tsconfig. `ApiError` was rewritten with explicit field declarations + assignment in the constructor body.
+- **Router topology fix:** `/invite/:token` lives as a **top-level sibling** of `OnboardingGate` (not a child), so an invitee without a household can accept the invite before hitting the onboarding wall.
+- **Drawer a11y hardening:** `SelectedCategoryDrawer` gained `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, and Escape-key dismiss (spec-review finding, not in original plan snippet).
+- **Stale delete-error bug:** `del.reset()` is now called on drawer close and on edit-out paths — otherwise a 409 error on category A would leak into the drawer of category B (spec-review finding).
+- **Label associations:** `OnboardingHousehold` inputs now use `htmlFor` / `id` pairs (spec-review finding).
+
+**Known caveats carried forward to Plan 2:**
+
+- Two transitive CVEs to bump: `Microsoft.OpenApi 2.0.0`, `System.Security.Cryptography.Xml 9.0.0`.
+- Two pre-existing nullable warnings in `backend/tests/.../CategoryEndpointTests.cs:73,184` — non-blocking, worth a follow-up.
+- Manual smoke checklist (Task H1) still needs a human pass once the user configures an Auth0 tenant and fills `frontend/.env.local`.
+
 
 
 

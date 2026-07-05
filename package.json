@@ -1,0 +1,10 @@
+{
+  "name": "list4me",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "dotnet run --project backend/src/List4Me.Api",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down"
+  }
+}
