@@ -108,4 +108,26 @@ public class ListEndpointTests(PostgresFixture pg)
         var archived = await client.GetFromJsonAsync<ListSummaryDto[]>("/api/lists?archived=true");
         archived.Should().ContainSingle(l => l.Id == id && l.ArchivedAt != null);
     }
+
+    [Fact]
+    public async Task Delete_list_soft_deletes_and_hides_from_all_queries()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|lst-g", "G");
+        var create = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("Trash", categoryId, null));
+        var id = (await create.Content.ReadFromJsonAsync<ListDetailDto>())!.Id;
+
+        var del = await client.DeleteAsync($"/api/lists/{id}");
+        del.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var active = await client.GetFromJsonAsync<ListSummaryDto[]>("/api/lists");
+        active.Should().NotContain(l => l.Id == id);
+
+        var archived = await client.GetFromJsonAsync<ListSummaryDto[]>("/api/lists?archived=true");
+        archived.Should().NotContain(l => l.Id == id);
+
+        var get = await client.GetAsync($"/api/lists/{id}");
+        get.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }

@@ -13,7 +13,7 @@ public static class ListEndpoints
         lists.MapGet("/{id:guid}", GetList.Handle);
         lists.MapPatch("/{id:guid}", UpdateList.Handle)
             .AddEndpointFilter<ValidationFilter<UpdateListRequest>>();
-        // Remaining handlers wired progressively in task C6.
+        lists.MapDelete("/{id:guid}", DeleteList.Handle);
 
         var items = app.MapGroup("/api/lists/{listId:guid}/items").RequireAuthorization();
         // Handlers wired in Phase D.
