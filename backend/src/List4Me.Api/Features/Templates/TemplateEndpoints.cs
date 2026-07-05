@@ -7,7 +7,7 @@ public static class TemplateEndpoints
     public static IEndpointRouteBuilder MapTemplates(this IEndpointRouteBuilder app)
     {
         var g = app.MapGroup("/api/templates").RequireAuthorization();
-        // Handlers wired in tasks E2-E5.
+        g.MapGet("/", ListTemplates.Handle);
         return app;
     }
 }
