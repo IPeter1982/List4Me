@@ -1,0 +1,62 @@
+using System.Net;
+using System.Net.Http.Json;
+using FluentAssertions;
+using List4Me.Api.Features.Categories;
+using List4Me.Api.Features.Households;
+using List4Me.Api.Features.Lists;
+using List4Me.Api.Features.Products;
+using List4Me.Tests.Integration.Fixtures;
+using Xunit;
+
+namespace List4Me.Tests.Integration;
+
+[Collection("Postgres")]
+public class ListItemEndpointTests(PostgresFixture pg)
+{
+    private static async Task<(HttpClient client, Guid categoryId, Guid listId, Guid productId)>
+        Setup(ApiFactory factory, string userId, string name)
+    {
+        var client = factory.CreateClientAs(userId, name: name);
+        await client.PostAsJsonAsync("/api/households", new CreateHouseholdRequest($"{name}-House"));
+        var cats = await client.GetFromJsonAsync<CategoryDto[]>("/api/categories");
+        var categoryId = cats![0].Id;
+        var products = await client.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{categoryId}/products");
+        var productId = products![0].Id;
+        var listResp = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("Test", categoryId, null));
+        var listId = (await listResp.Content.ReadFromJsonAsync<ListDetailDto>())!.Id;
+        return (client, categoryId, listId, productId);
+    }
+
+    [Fact]
+    public async Task Add_item_to_list_returns_201_and_appears_in_detail()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, _, listId, productId) = await Setup(factory, "auth0|itm-a", "A");
+
+        var resp = await client.PostAsJsonAsync($"/api/lists/{listId}/items",
+            new CreateListItemRequest(productId, 2m, "db", null, "kis csomag"));
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var item = await resp.Content.ReadFromJsonAsync<ListItemDto>();
+        item!.ProductId.Should().Be(productId);
+        item.Quantity.Should().Be(2m);
+        item.Unit.Should().Be("db");
+
+        var detail = await client.GetFromJsonAsync<ListDetailDto>($"/api/lists/{listId}");
+        detail!.Items.Should().ContainSingle(i => i.Id == item.Id);
+    }
+
+    [Fact]
+    public async Task Add_item_rejects_product_from_another_household()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (aliceClient, _, aliceList, _) = await Setup(factory, "auth0|itm-iso-a", "Alice");
+        var (_, bobCat, _, _) = await Setup(factory, "auth0|itm-iso-b", "Bob");
+        var bobProducts = await aliceClient.GetAsync($"/api/categories/{bobCat}/products");
+        bobProducts.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var resp = await aliceClient.PostAsJsonAsync($"/api/lists/{aliceList}/items",
+            new CreateListItemRequest(Guid.NewGuid(), null, null, null, null));
+        resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+}

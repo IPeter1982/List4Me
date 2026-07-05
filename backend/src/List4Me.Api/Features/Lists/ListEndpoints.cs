@@ -16,7 +16,8 @@ public static class ListEndpoints
         lists.MapDelete("/{id:guid}", DeleteList.Handle);
 
         var items = app.MapGroup("/api/lists/{listId:guid}/items").RequireAuthorization();
-        // Handlers wired in Phase D.
+        items.MapPost("/", CreateListItem.Handle)
+            .AddEndpointFilter<ValidationFilter<CreateListItemRequest>>();
         return app;
     }
 }
