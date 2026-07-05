@@ -134,4 +134,46 @@ public class ProductEndpointTests(PostgresFixture pg)
             $"/api/categories/{categoryId}/products?q=ideiglenes");
         all.Should().NotContain(p => p.Id == created.Id);
     }
+
+    [Fact]
+    public async Task Favorite_toggle_reflects_in_list_flag()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|prod-h", "H");
+        var products = await client.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{categoryId}/products");
+        var target = products![0];
+
+        var addResp = await client.PostAsync($"/api/products/{target.Id}/favorite", content: null);
+        addResp.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var withFav = await client.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{categoryId}/products?favoritesOnly=true");
+        withFav.Should().ContainSingle(p => p.Id == target.Id && p.IsFavorite);
+
+        var removeResp = await client.DeleteAsync($"/api/products/{target.Id}/favorite");
+        removeResp.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var stillFav = await client.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{categoryId}/products?favoritesOnly=true");
+        stillFav.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Favorite_is_idempotent_and_scoped_per_member()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (aliceClient, categoryId) = await Setup(factory, "auth0|prod-i", "Alice");
+        var products = await aliceClient.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{categoryId}/products");
+        var target = products![0];
+
+        await aliceClient.PostAsync($"/api/products/{target.Id}/favorite", content: null);
+        var second = await aliceClient.PostAsync($"/api/products/{target.Id}/favorite", content: null);
+        second.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var aliceFav = await aliceClient.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{categoryId}/products?favoritesOnly=true");
+        aliceFav.Should().HaveCount(1);
+    }
 }

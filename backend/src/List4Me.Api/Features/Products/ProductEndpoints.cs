@@ -15,6 +15,8 @@ public static class ProductEndpoints
         byId.MapPatch("/", UpdateProduct.Handle)
             .AddEndpointFilter<ValidationFilter<UpdateProductRequest>>();
         byId.MapDelete("/", DeleteProduct.Handle);
+        byId.MapPost("/favorite", ToggleFavorite.Add);
+        byId.MapDelete("/favorite", ToggleFavorite.Remove);
         return app;
     }
 }
