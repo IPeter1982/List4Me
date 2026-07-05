@@ -22,6 +22,7 @@ public static class ListEndpoints
             .AddEndpointFilter<ValidationFilter<UpdateListItemRequest>>();
         items.MapPost("/{itemId:guid}/complete", ToggleListItemComplete.Complete);
         items.MapPost("/{itemId:guid}/uncomplete", ToggleListItemComplete.Uncomplete);
+        items.MapDelete("/{itemId:guid}", DeleteListItem.Handle);
         return app;
     }
 }

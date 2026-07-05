@@ -104,4 +104,20 @@ public class ListItemEndpointTests(PostgresFixture pg)
         reverted.CompletedAt.Should().BeNull();
         reverted.CompletedByMemberId.Should().BeNull();
     }
+
+    [Fact]
+    public async Task Delete_item_removes_it_from_list_detail()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, _, listId, productId) = await Setup(factory, "auth0|itm-d", "D");
+        var addResp = await client.PostAsJsonAsync($"/api/lists/{listId}/items",
+            new CreateListItemRequest(productId, null, null, null, null));
+        var added = await addResp.Content.ReadFromJsonAsync<ListItemDto>();
+
+        var del = await client.DeleteAsync($"/api/lists/{listId}/items/{added!.Id}");
+        del.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var detail = await client.GetFromJsonAsync<ListDetailDto>($"/api/lists/{listId}");
+        detail!.Items.Should().BeEmpty();
+    }
 }
