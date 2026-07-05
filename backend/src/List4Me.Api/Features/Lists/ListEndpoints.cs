@@ -18,6 +18,8 @@ public static class ListEndpoints
         var items = app.MapGroup("/api/lists/{listId:guid}/items").RequireAuthorization();
         items.MapPost("/", CreateListItem.Handle)
             .AddEndpointFilter<ValidationFilter<CreateListItemRequest>>();
+        items.MapPatch("/{itemId:guid}", UpdateListItem.Handle)
+            .AddEndpointFilter<ValidationFilter<UpdateListItemRequest>>();
         return app;
     }
 }

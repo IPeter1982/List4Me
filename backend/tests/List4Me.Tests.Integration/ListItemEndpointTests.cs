@@ -59,4 +59,23 @@ public class ListItemEndpointTests(PostgresFixture pg)
             new CreateListItemRequest(Guid.NewGuid(), null, null, null, null));
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task Patch_item_updates_quantity_note_expiry()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, _, listId, productId) = await Setup(factory, "auth0|itm-b", "B");
+        var addResp = await client.PostAsJsonAsync($"/api/lists/{listId}/items",
+            new CreateListItemRequest(productId, 1m, "db", null, null));
+        var added = await addResp.Content.ReadFromJsonAsync<ListItemDto>();
+
+        var patch = await client.PatchAsJsonAsync($"/api/lists/{listId}/items/{added!.Id}",
+            new UpdateListItemRequest(3m, "kg", new DateOnly(2027, 1, 1), "más"));
+        patch.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await patch.Content.ReadFromJsonAsync<ListItemDto>();
+        updated!.Quantity.Should().Be(3m);
+        updated.Unit.Should().Be("kg");
+        updated.ExpiresOn.Should().Be(new DateOnly(2027, 1, 1));
+        updated.Note.Should().Be("más");
+    }
 }
