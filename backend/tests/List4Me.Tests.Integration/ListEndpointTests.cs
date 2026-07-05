@@ -58,4 +58,19 @@ public class ListEndpointTests(PostgresFixture pg)
             new CreateListRequest("X", Guid.NewGuid(), null));
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task Get_list_returns_detail_with_empty_items_for_new_empty_list()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|lst-d", "D");
+
+        var create = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("X", categoryId, null));
+        var listId = (await create.Content.ReadFromJsonAsync<ListDetailDto>())!.Id;
+
+        var detail = await client.GetFromJsonAsync<ListDetailDto>($"/api/lists/{listId}");
+        detail!.Id.Should().Be(listId);
+        detail.Items.Should().BeEmpty();
+    }
 }
