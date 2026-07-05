@@ -8,7 +8,8 @@ public static class ProductEndpoints
     {
         var byCategory = app.MapGroup("/api/categories/{categoryId:guid}/products").RequireAuthorization();
         byCategory.MapGet("/", ListProducts.Handle);
-        // Handlers wired progressively in tasks B2, B3.
+        byCategory.MapPost("/", CreateProduct.Handle)
+            .AddEndpointFilter<ValidationFilter<CreateProductRequest>>();
 
         var byId = app.MapGroup("/api/products/{id:guid}").RequireAuthorization();
         // Handlers wired in tasks B4-B6.

@@ -64,4 +64,36 @@ public class ProductEndpointTests(PostgresFixture pg)
 
         favs.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task Create_product_returns_201_and_appears_in_list()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|prod-d", "D");
+
+        var resp = await client.PostAsJsonAsync(
+            $"/api/categories/{categoryId}/products",
+            new CreateProductRequest("Tejföl", 1m, "db"));
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await resp.Content.ReadFromJsonAsync<ProductDto>();
+        created!.Name.Should().Be("Tejföl");
+        created.DefaultUnit.Should().Be("db");
+
+        var all = await client.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{categoryId}/products?q=tejföl");
+        all.Should().ContainSingle(p => p.Id == created.Id);
+    }
+
+    [Fact]
+    public async Task Create_product_rejects_empty_name()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|prod-e", "E");
+
+        var resp = await client.PostAsJsonAsync(
+            $"/api/categories/{categoryId}/products",
+            new CreateProductRequest("", null, null));
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
 }
