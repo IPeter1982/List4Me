@@ -31,4 +31,69 @@ public class TemplateEndpointTests(PostgresFixture pg)
         var items = await client.GetFromJsonAsync<TemplateSummaryDto[]>("/api/templates");
         items.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task Create_empty_template_returns_201_and_appears_in_list()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|tpl-b", "B");
+
+        var resp = await client.PostAsJsonAsync("/api/templates",
+            new CreateTemplateRequest("Alaptemplate", categoryId, null));
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await resp.Content.ReadFromJsonAsync<TemplateDetailDto>();
+        created!.Items.Should().BeEmpty();
+        created.Name.Should().Be("Alaptemplate");
+    }
+
+    [Fact]
+    public async Task Create_template_from_source_list_copies_items()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|tpl-c", "C");
+        var products = await client.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{categoryId}/products");
+
+        var listResp = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("SrcList", categoryId, null));
+        var listId = (await listResp.Content.ReadFromJsonAsync<ListDetailDto>())!.Id;
+        foreach (var p in products!.Take(3))
+        {
+            await client.PostAsJsonAsync($"/api/lists/{listId}/items",
+                new CreateListItemRequest(p.Id, 2m, "db", null, "seed"));
+        }
+
+        var tplResp = await client.PostAsJsonAsync("/api/templates",
+            new CreateTemplateRequest("FromList", categoryId, listId));
+        tplResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var tpl = await tplResp.Content.ReadFromJsonAsync<TemplateDetailDto>();
+        tpl!.Items.Should().HaveCount(3);
+        tpl.Items.Should().OnlyContain(i => i.Quantity == 2m && i.Unit == "db" && i.Note == "seed");
+    }
+
+    [Fact]
+    public async Task Create_list_from_template_copies_items()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|tpl-d", "D");
+        var products = await client.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{categoryId}/products");
+
+        var srcListResp = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("Src", categoryId, null));
+        var srcId = (await srcListResp.Content.ReadFromJsonAsync<ListDetailDto>())!.Id;
+        foreach (var p in products!.Take(2))
+            await client.PostAsJsonAsync($"/api/lists/{srcId}/items",
+                new CreateListItemRequest(p.Id, 1m, null, null, null));
+        var tplResp = await client.PostAsJsonAsync("/api/templates",
+            new CreateTemplateRequest("Tpl", categoryId, srcId));
+        var templateId = (await tplResp.Content.ReadFromJsonAsync<TemplateDetailDto>())!.Id;
+
+        var newListResp = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("FromTemplate", categoryId, templateId));
+        newListResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var newList = await newListResp.Content.ReadFromJsonAsync<ListDetailDto>();
+        newList!.Items.Should().HaveCount(2);
+        newList.FromTemplateId.Should().Be(templateId);
+    }
 }

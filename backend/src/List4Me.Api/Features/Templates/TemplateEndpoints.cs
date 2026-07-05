@@ -8,6 +8,8 @@ public static class TemplateEndpoints
     {
         var g = app.MapGroup("/api/templates").RequireAuthorization();
         g.MapGet("/", ListTemplates.Handle);
+        g.MapPost("/", CreateTemplate.Handle)
+            .AddEndpointFilter<ValidationFilter<CreateTemplateRequest>>();
         return app;
     }
 }
