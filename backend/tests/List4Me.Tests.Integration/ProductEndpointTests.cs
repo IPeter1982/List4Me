@@ -116,4 +116,22 @@ public class ProductEndpointTests(PostgresFixture pg)
         updated.DefaultQuantity.Should().Be(500m);
         updated.DefaultUnit.Should().Be("g");
     }
+
+    [Fact]
+    public async Task Delete_product_soft_deletes_and_removes_from_list()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|prod-g", "G");
+
+        var create = await client.PostAsJsonAsync($"/api/categories/{categoryId}/products",
+            new CreateProductRequest("Ideiglenes", null, null));
+        var created = await create.Content.ReadFromJsonAsync<ProductDto>();
+
+        var del = await client.DeleteAsync($"/api/products/{created!.Id}");
+        del.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var all = await client.GetFromJsonAsync<ProductDto[]>(
+            $"/api/categories/{categoryId}/products?q=ideiglenes");
+        all.Should().NotContain(p => p.Id == created.Id);
+    }
 }

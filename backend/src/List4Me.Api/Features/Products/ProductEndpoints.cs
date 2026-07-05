@@ -14,6 +14,7 @@ public static class ProductEndpoints
         var byId = app.MapGroup("/api/products/{id:guid}").RequireAuthorization();
         byId.MapPatch("/", UpdateProduct.Handle)
             .AddEndpointFilter<ValidationFilter<UpdateProductRequest>>();
+        byId.MapDelete("/", DeleteProduct.Handle);
         return app;
     }
 }
