@@ -21,10 +21,22 @@ public class FakeJwtAuthHandler(
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        if (!Request.Headers.TryGetValue(UserHeader, out var sub) || string.IsNullOrEmpty(sub))
+        string? sub = Request.Headers.TryGetValue(UserHeader, out var subHeader) && !string.IsNullOrEmpty(subHeader)
+            ? subHeader.ToString()
+            : null;
+
+        if (sub is null)
+        {
+            // SignalR clients pass the sub as the access token — accept "Bearer <sub>".
+            var authHeader = Request.Headers.Authorization.ToString();
+            if (authHeader.StartsWith("Bearer ", StringComparison.Ordinal))
+                sub = authHeader["Bearer ".Length..];
+        }
+
+        if (string.IsNullOrEmpty(sub))
             return Task.FromResult(AuthenticateResult.NoResult());
 
-        var claims = new List<Claim> { new("sub", sub!) };
+        var claims = new List<Claim> { new("sub", sub) };
         if (Request.Headers.TryGetValue(EmailHeader, out var email))
             claims.Add(new Claim("email", email!));
         if (Request.Headers.TryGetValue(NameHeader, out var name))
