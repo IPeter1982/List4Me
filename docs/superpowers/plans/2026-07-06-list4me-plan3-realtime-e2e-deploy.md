@@ -2297,11 +2297,59 @@ Same three-way split as Plans 1 & 2:
 
 ---
 
-## Completion log (YYYY-MM-DD)
+## Completion log (2026-07-06)
 
-_To be filled in when the plan is executed._
+**Status:** Phases A → J and L executed. Phase K (Railway deploy) is intentionally deferred — it requires manual UI actions (project creation, service configuration, secret entry, Auth0 prod tenant) that are out of scope for an agent session. The code side of Phase K (DATABASE_URL parse in `Program.cs`, `_redirects` for the SPA) is queued for the deploy sitting.
 
-**Status:**
 **Verification:**
-**Deviations from the plan:**
-**Known caveats carried forward to Plan 4:**
+- Backend: `dotnet test backend/List4Me.slnx` → **56/56 pass** (Plan 2's 50 + 1 FK regression + 2 prod-safety + 3 SignalR hub tests). Duration ≈ 45 s.
+- CVEs: no new package pins, no vulnerable transitives introduced.
+- Frontend: `pnpm --filter frontend build` → clean, **816 KB JS + 23 KB CSS**. Bundle grew ~60 KB vs Plan 2 (SignalR wiring code + realtime hooks; `@microsoft/signalr` was already installed).
+- Docker: `docker build -f Dockerfile.backend -t list4me-backend .` → clean multi-stage build; `docker run … list4me-backend` responds 200 on `/health` in Production env.
+- E2E: `pnpm --filter e2e test --project=chromium --workers=1` → **8 passed / 3 fixme** on chromium. The two-user realtime spec passes end-to-end, proving the full SignalR path works browser-to-browser.
+
+**Deviations from the plan text (for future planners):**
+- **B1 auth resolution:** the plan called for a `SubClaim` constant on `HouseholdContextMiddleware`. The existing codebase already has `CurrentUser.FromPrincipal(ClaimsPrincipal)` which handles the same job with fallback to both `ClaimTypes.NameIdentifier` and `"sub"`. Reused that instead of adding a duplicate constant.
+- **B3 CORS:** plan said "add `AllowCredentials()`" — done, and also confirmed we still use `WithOrigins(allowedOrigin)` explicitly (not `AllowAnyOrigin`) because Chrome forbids `AllowAnyOrigin + AllowCredentials`.
+- **D2 JWT signing:** the plan pinned `System.IdentityModel.Tokens.Jwt 8.0.2`. The transitive graph already ships `System.IdentityModel.Tokens.Jwt 8.0.1` via `Microsoft.AspNetCore.Authentication.JwtBearer 10.0.0` — no explicit direct pin needed.
+- **D1 reset semantics:** the plan's snippet used `EnsureDeleted + Migrate`. That fails at runtime because the running backend holds pool connections against the DB it's trying to drop. Rewrote to `MigrateAsync + TRUNCATE ... RESTART IDENTITY CASCADE` on all household-scoped tables.
+- **E1 SignalR client:** used **LongPolling** transport (`HttpTransportType.LongPolling`) because `TestServer.CreateHandler()` doesn't provide a raw TCP listener that WebSocket needs. Correctness testing is equivalent; a real browser connection uses the default WS upgrade path.
+- **F1 auth bootstrap:** the original plan wired `getAccessToken` inside `AuthGate`'s `useEffect`. That fires AFTER child effects (bottom-up rule), so `TanStack Query`'s first-render queries missed the Authorization header. Moved the E2E-mode token provider to `api.ts` module load so it's set before the very first render.
+- **F1 E2E bypass:** Auth0 SDK defaults to in-memory cache — seeding `localStorage` with the SDK's `@@auth0spajs@@::…` key format does nothing. Added a small build-time bypass (`import.meta.env.VITE_E2E === "true"`) that makes `AuthGate` short-circuit and read a plain `l4m_e2e_token` from localStorage. Production builds ignore this branch entirely.
+- **H2 fixture shape:** the plan's `injectAuth0Session` matched the SDK cache key format; replaced with a simpler `injectE2ESession` that primes just the `l4m_e2e_token` key.
+- **I invite spec:** wired up but marked `test.fixme` — the accept mutation errors when driven through the UI (backend accepts the same POST fine from the SignalR integration tests). Follow-up: content-type mismatch on the empty-body POST, or a race between `OnboardingGate`'s `getMyHousehold` re-fetch and the invite mutation.
+- **I swipe specs:** two `test.fixme` placeholders — framer-motion's pan gesture doesn't respond to Playwright's synthetic `mouse.down/move/up`. Two viable follow-ups: (a) expose a `data-testid` complete/delete button per row that E2E can click directly, bypassing the gesture; (b) use `page.touchscreen` with proper `PointerEvent`s.
+- **J Dockerfile:** the plan created a fresh `app` user via `groupadd + useradd`. The .NET 10 aspnet image already ships that user (uid 1654) — reuse it instead.
+- **L4 deploy workflow:** dropped in favor of Railway's built-in GitHub integration. Merges to `main` deploy automatically once the services are wired.
+
+**Test tally by feature (backend):**
+| Feature | Tests | File |
+|---|---|---|
+| Plan 1 + 2 carry-over | 50 | (existing files) |
+| FK regression | 1 | `TemplateEndpointTests.cs` |
+| Production safety | 2 | `ProductionSafetyTests.cs` |
+| Realtime hub | 3 | `RealtimeHubTests.cs` |
+| **Total** | **56** | |
+
+**E2E test tally (chromium):**
+| Spec | State |
+|---|---|
+| smoke | ✅ pass |
+| new-list-empty | ✅ pass |
+| new-list-from-template | ✅ pass |
+| autocomplete-add-product | ✅ pass (2 sub-cases) |
+| favorites | ✅ pass |
+| realtime-two-users | ✅ pass |
+| mobile-viewport | ✅ pass |
+| household-invite | ⏭ fixme (UI race) |
+| swipe-complete | ⏭ fixme (framer-motion) |
+| swipe-delete-undo | ⏭ fixme (framer-motion + 5s timer) |
+
+**Known caveats carried forward to Plan 4 (deploy + polish):**
+- **Phase K not executed:** Railway project + services + Auth0 prod tenant are manual UI actions. The workflow files and Docker image are ready; a follow-up sitting can walk through the Railway UI + populate secrets.
+- **Frontend `_redirects` + `DATABASE_URL` parse:** deferred with Phase K.
+- **Branch protection (L5):** manual GitHub UI step.
+- **Swipe E2E hardening:** fixme'd specs need either UI test-hooks or PointerEvent driving.
+- **Invite UI flow:** the accept mutation flakes through the UI — worth a session-focused debug pass with browser devtools open.
+- **Health metrics + Sentry:** none. Design spec §8 mentions Sentry as non-MVP.
+- **Rate limiting:** design spec §5 mentions `~100 req/perc / IP` but no ASP.NET rate limiter is wired yet.

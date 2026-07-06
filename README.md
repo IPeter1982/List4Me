@@ -4,20 +4,23 @@ Kategorizált listakezelő háztartásoknak. Monorepo: `/backend` (.NET 10 Minim
 
 ## Aktuális állapot
 
-**Plan 2 (Products + Lists + Templates) kész** — branch: `plan2-lists`, PR: [github.com/IPeter1982/List4Me/pulls](https://github.com/IPeter1982/List4Me/pulls).
+**Plan 3 (Realtime + E2E + Docker + CI) kész** — branch: `plan3-realtime-deploy`. Railway deploy (Phase K) és GitHub branch protection (L5) UI-alapú kézi lépések, code-side minden más él.
 
-- ✅ Backend: 50/50 integrációs teszt zöld (Testcontainers Postgres 17)
-- ✅ Frontend: tiszta build (758 KB / gzip 236 KB) — bundle a framer-motion + zustand + új képernyők miatt nőtt
-- ✅ Products slice: seedelt katalógus + kategória-scope, `?q` autocomplete (pg_trgm GIN index), `?favoritesOnly`, kedvenc jelölés per household member
-- ✅ Lists slice: háztartás-scope, kategória-scope, `?archived` szűrő, üres vagy sablonból létrehozás, tétel-CRUD, `?/complete` + `?/uncomplete`
-- ✅ Templates slice: sablon üresen vagy meglévő listából, listát sablonból (fromTemplateId)
-- ✅ Cross-household izoláció integrációs tesztekkel bizonyítva (products/lists/templates)
-- ✅ CVE-tiszta backend (Microsoft.OpenApi 2.9.0 + System.Security.Cryptography.Xml 10.0.9)
-- ✅ Frontend UX: mindig látható termékkereső, framer-motion swipe (jobbra kész / balra törlés), zustand-alapú 5 mp-es undo toast, lejárati badge (piros/sárga/szürke), long-press részletek modal
+- ✅ Backend: **56/56 integrációs teszt zöld** (Plan 2's 50 + 1 FK regressziós + 2 prod-safety + 3 SignalR hub teszt)
+- ✅ Frontend: tiszta build (816 KB / 23 KB CSS)
+- ✅ SignalR `HouseholdHub` `/hubs/household` — per-háztartás group, `[Authorize]`, `AllowCredentials` CORS
+- ✅ `IRealtimeNotifier` minden CRUD handler-ben — Lists / List items / Categories / Products / Templates / Members
+- ✅ `frontend/src/features/realtime/useHouseholdRealtime` — automatikus reconnect, TanStack Query invalidation event-per-eventre
+- ✅ Test-only endpoints `/api/test/reset` + `/api/test/login-as` (csak Test/Development env; Production-ban 404, integrációs teszttel bizonyítva)
+- ✅ Playwright E2E workspace (`e2e/`), 8 zöld chromium spec (a two-user realtime spec browser-to-browser bizonyítja a hub-flow-t), 3 dokumentált fixme
+- ✅ Multi-stage `Dockerfile.backend` (SDK build → aspnet non-root, HEALTHCHECK), prod-like `docker compose --profile prod-like up`
+- ✅ CI: `.github/workflows/backend.yml`, `frontend.yml`, `e2e.yml` (PR-gate + main mirror)
 
-**Plan 1 (Foundation + Households + Categories) kész** — branch: `plan1-foundation`. Részletek és eltérések: `docs/superpowers/plans/2026-07-02-list4me-plan1-foundation.md` → *Completion log*.
+**Plan 2 (Products + Lists + Templates) kész** — merge PR #3 → `main`. Részletek: `docs/superpowers/plans/2026-07-05-list4me-plan2-products-lists-templates.md`.
 
-Következő: **Plan 3** — SignalR realtime, Playwright E2E, Docker + Railway deploy, CI/CD. Részletek: `docs/superpowers/plans/2026-07-05-list4me-plan2-products-lists-templates.md` → *Completion log*.
+**Plan 1 (Foundation + Households + Categories) kész** — merge PR #1 → `main`. Részletek: `docs/superpowers/plans/2026-07-02-list4me-plan1-foundation.md`.
+
+Következő: **Phase K + Plan 4** — Railway prod deploy (services + Auth0 prod tenant + `_redirects` + `DATABASE_URL` parse), GitHub branch protection, invite UI race + swipe E2E hardening. Részletek: `docs/superpowers/plans/2026-07-06-list4me-plan3-realtime-e2e-deploy.md` → *Completion log*.
 
 ## Előfeltételek
 
@@ -81,6 +84,19 @@ Miután beállítottad az Auth0 tenant-et és mindhárom folyamat fut (Postgres,
 - [ ] Második böngésző (inkognitó) → `/invite/:token` URL → Auth0 login → invite accept → home
 - [ ] Beállítások fül mindkét usernél mindkét tagot listázza
 
+### Plan 3 (realtime + E2E + docker)
+
+- [ ] Backend Docker image: `docker build -f Dockerfile.backend -t l4m-backend .` → clean; `docker run … l4m-backend` + `curl /health` → 200 Production env
+- [ ] Prod-like compose: `docker compose --profile prod-like up` → postgres + backend zöld
+- [ ] Frontend E2E build: `pnpm --filter frontend build --mode e2e` → `.env.e2e` betölt, tiszta build
+- [ ] E2E workspace: `pnpm --filter e2e test --project=chromium --workers=1` → 8 zöld + 3 fixme
+- [ ] Két böngészőben ugyanaz a user: Alice létrehoz egy listát → Bob felület 2 mp-en belül frissül (SignalR)
+- [ ] Két külön user egy háztartásban: A hozzáad tételt → B ListView-je automatikusan frissül
+- [ ] Kill a backend → frontend "kapcsolat vesztve" állapot; backend újraindul → automatikus reconnect
+- [ ] Prod env-ben `/api/test/reset` és `/api/test/login-as` → 404 (`ProductionSafetyTests` bizonyítja unit szinten)
+- [ ] `/hubs/household` `Authorization: Bearer <érvénytelen>` → 401
+- [ ] `.github/workflows/e2e.yml` sikeresen fut egy PR-en (services Postgres + backend Test env + Playwright chromium)
+
 ### Plan 2 (products + lists + templates)
 
 - [ ] Kategória kártya → alsó drawer → "Termékek" → seedelt terméklista
@@ -106,5 +122,5 @@ Miután beállítottad az Auth0 tenant-et és mindhárom folyamat fut (Postgres,
 
 - Design spec: `docs/superpowers/specs/2026-07-02-list4me-design.md`
 - Plan 1 (Foundation + Households + Categories): `docs/superpowers/plans/2026-07-02-list4me-plan1-foundation.md`
-- Plan 2 (Products + Lists + Templates — jelen): `docs/superpowers/plans/2026-07-05-list4me-plan2-products-lists-templates.md`
-- Plan 3 (Realtime + E2E + Deploy) később.
+- Plan 2 (Products + Lists + Templates): `docs/superpowers/plans/2026-07-05-list4me-plan2-products-lists-templates.md`
+- Plan 3 (Realtime + E2E + Docker + CI — jelen): `docs/superpowers/plans/2026-07-06-list4me-plan3-realtime-e2e-deploy.md`
