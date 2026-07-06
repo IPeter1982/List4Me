@@ -4182,13 +4182,13 @@ git commit -m "docs: README with quickstart and testing instructions"
 
 ## Completion log (2026-07-04)
 
-**Status:** All 41 tasks (A1 → H2) complete. Branch `plan1-foundation` pushed to `origin`, PR open against `main`.
+**Status:** All 41 tasks (A1 → H2) complete. Branch `plan1-foundation` pushed to `origin`, PR open against `main`. One post-log fix (CORS wiring, commit `3811247` on 2026-07-04) added after the initial log — see deviations below.
 
 **Verification:**
 
 - Backend: `dotnet test backend/List4Me.slnx` → **20/20 pass** in ~16s (Testcontainers Postgres 17).
 - Frontend: `pnpm --filter frontend build` → clean build, 608 KB bundle (189 KB gzipped).
-- 39 commits across the branch, each reviewed by a two-stage subagent pass (spec compliance + code quality).
+- 40 commits across the branch, each reviewed by a two-stage subagent pass (spec compliance + code quality).
 
 **Deviations from the plan (documented for future planners):**
 
@@ -4201,6 +4201,7 @@ git commit -m "docs: README with quickstart and testing instructions"
 - **Drawer a11y hardening:** `SelectedCategoryDrawer` gained `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, and Escape-key dismiss (spec-review finding, not in original plan snippet).
 - **Stale delete-error bug:** `del.reset()` is now called on drawer close and on edit-out paths — otherwise a 409 error on category A would leak into the drawer of category B (spec-review finding).
 - **Label associations:** `OnboardingHousehold` inputs now use `htmlFor` / `id` pairs (spec-review finding).
+- **CORS never wired (post-log fix):** `appsettings.json` defined `AllowedOrigin` but Task B7's `Program.cs` snippet omitted `AddCors` / `UseCors`, so the browser preflight failed with 405 on OPTIONS. Fixed in commit `3811247`: register the default policy with `WithOrigins(AllowedOrigin).AllowAnyHeader().AllowAnyMethod()` and mount `app.UseCors()` before `UseAuthentication()`. Same commit filled the dev Auth0 `Domain` / `Audience` into `appsettings.Development.json`.
 
 **Known caveats carried forward to Plan 2:**
 

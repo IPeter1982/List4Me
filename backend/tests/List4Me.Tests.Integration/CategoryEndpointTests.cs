@@ -70,7 +70,7 @@ public class CategoryEndpointTests(PostgresFixture pg)
 
         var items = await client.GetFromJsonAsync<CategoryDto[]>("/api/categories");
         items!.Should().ContainSingle();
-        items[0].Subcategories.Should().ContainSingle(s => s.Name == "Pékáru");
+        items![0].Subcategories.Should().ContainSingle(s => s.Name == "Pékáru");
     }
 
     [Fact]
@@ -181,8 +181,8 @@ public class CategoryEndpointTests(PostgresFixture pg)
         var items = await client.GetFromJsonAsync<CategoryDto[]>("/api/categories");
         items!.Select(c => c.Name).Should().BeEquivalentTo(
             new[] { "Bevásárlás", "Hűtő", "Fagyasztó", "Nyaralás" });
-        items.First(c => c.Name == "Bevásárlás").Subcategories.Should().NotBeEmpty();
-        items.First(c => c.Name == "Bevásárlás").CompletedLabel.Should().Be("Megvettem");
-        items.First(c => c.Name == "Hűtő").CompletedLabel.Should().Be("Elfogyott");
+        items!.First(c => c.Name == "Bevásárlás").Subcategories.Should().NotBeEmpty();
+        items!.First(c => c.Name == "Bevásárlás").CompletedLabel.Should().Be("Megvettem");
+        items!.First(c => c.Name == "Hűtő").CompletedLabel.Should().Be("Elfogyott");
     }
 }

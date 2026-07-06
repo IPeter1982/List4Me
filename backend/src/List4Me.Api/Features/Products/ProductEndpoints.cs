@@ -1,0 +1,22 @@
+using List4Me.Api.Common;
+
+namespace List4Me.Api.Features.Products;
+
+public static class ProductEndpoints
+{
+    public static IEndpointRouteBuilder MapProducts(this IEndpointRouteBuilder app)
+    {
+        var byCategory = app.MapGroup("/api/categories/{categoryId:guid}/products").RequireAuthorization();
+        byCategory.MapGet("/", ListProducts.Handle);
+        byCategory.MapPost("/", CreateProduct.Handle)
+            .AddEndpointFilter<ValidationFilter<CreateProductRequest>>();
+
+        var byId = app.MapGroup("/api/products/{id:guid}").RequireAuthorization();
+        byId.MapPatch("/", UpdateProduct.Handle)
+            .AddEndpointFilter<ValidationFilter<UpdateProductRequest>>();
+        byId.MapDelete("/", DeleteProduct.Handle);
+        byId.MapPost("/favorite", ToggleFavorite.Add);
+        byId.MapDelete("/favorite", ToggleFavorite.Remove);
+        return app;
+    }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus, Pencil, Trash2 } from "lucide-react"
+import { Plus, Pencil, Trash2, Package } from "lucide-react"
 import { PageShell } from "@/components/PageShell"
 import { Button } from "@/components/ui/button"
 import { ApiError } from "@/lib/api"
@@ -11,6 +12,7 @@ import { CategoryEditor } from "./CategoryEditor"
 
 export function CategoryListScreen() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const { data, isLoading } = useQuery({
     queryKey: ["categories"], queryFn: categoriesApi.list
   })
@@ -55,6 +57,12 @@ export function CategoryListScreen() {
           category={selected}
           onClose={() => { del.reset(); setSelected(undefined) }}
           onEdit={() => { del.reset(); setEditing(selected); setSelected(undefined) }}
+          onOpenProducts={() => {
+            const id = selected.id
+            del.reset()
+            setSelected(undefined)
+            navigate(`/categories/${id}/products`)
+          }}
           onDelete={(force) => del.mutate({ id: selected.id, force })}
           deleteError={del.error instanceof ApiError ? del.error : null}
         />
@@ -72,11 +80,12 @@ export function CategoryListScreen() {
 }
 
 function SelectedCategoryDrawer({
-  category, onClose, onEdit, onDelete, deleteError
+  category, onClose, onEdit, onOpenProducts, onDelete, deleteError
 }: {
   category: Category
   onClose: () => void
   onEdit: () => void
+  onOpenProducts: () => void
   onDelete: (force: boolean) => void
   deleteError: ApiError | null
 }) {
@@ -100,6 +109,9 @@ function SelectedCategoryDrawer({
       >
         <h3 id="selected-category-title" className="text-lg font-semibold">{category.name}</h3>
         <div className="flex gap-2">
+          <Button variant="secondary" onClick={onOpenProducts} className="flex-1">
+            <Package className="size-4 mr-2" /> Termékek
+          </Button>
           <Button variant="secondary" onClick={onEdit} className="flex-1">
             <Pencil className="size-4 mr-2" /> Szerkeszt
           </Button>

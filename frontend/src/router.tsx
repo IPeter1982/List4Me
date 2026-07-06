@@ -3,14 +3,14 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from "react-rou
 import { useQuery } from "@tanstack/react-query"
 import { householdApi } from "@/features/household/api"
 import { OnboardingHousehold } from "@/auth/OnboardingHousehold"
-import { PageShell } from "@/components/PageShell"
 import { ApiError } from "@/lib/api"
 import { CategoryListScreen } from "@/features/categories/CategoryList"
 import { HouseholdSettingsScreen } from "@/features/household/HouseholdSettings"
 import { InviteAcceptPage } from "@/features/household/InviteAcceptPage"
-
-function ListsScreen() { return <PageShell title="Listák"><div>Listák jönnek.</div></PageShell> }
-function TemplatesScreen() { return <PageShell title="Sablonok"><div>Sablonok jönnek.</div></PageShell> }
+import { ProductList } from "@/features/products/ProductList"
+import { ListsOverview } from "@/features/lists/ListsOverview"
+import { ListView } from "@/features/lists/ListView"
+import { TemplatesList } from "@/features/templates/TemplatesList"
 
 function OnboardingGate({ children }: { children: ReactNode }) {
   const { data, isLoading, error } = useQuery({
@@ -31,8 +31,10 @@ const router = createBrowserRouter([
     element: <OnboardingGate><Outlet /></OnboardingGate>,
     children: [
       { path: "/", element: <CategoryListScreen /> },
-      { path: "/lists", element: <ListsScreen /> },
-      { path: "/templates", element: <TemplatesScreen /> },
+      { path: "/lists", element: <ListsOverview /> },
+      { path: "/lists/:id", element: <ListView /> },
+      { path: "/templates", element: <TemplatesList /> },
+      { path: "/categories/:id/products", element: <ProductList /> },
       { path: "/settings", element: <HouseholdSettingsScreen /> },
       { path: "*", element: <Navigate to="/" replace /> }
     ]
