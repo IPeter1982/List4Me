@@ -11,6 +11,7 @@ import { ProductList } from "@/features/products/ProductList"
 import { ListsOverview } from "@/features/lists/ListsOverview"
 import { ListView } from "@/features/lists/ListView"
 import { TemplatesList } from "@/features/templates/TemplatesList"
+import { useHouseholdRealtime } from "@/features/realtime/useHouseholdRealtime"
 
 function OnboardingGate({ children }: { children: ReactNode }) {
   const { data, isLoading, error } = useQuery({
@@ -25,10 +26,15 @@ function OnboardingGate({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+function RealtimeGate({ children }: { children: ReactNode }) {
+  useHouseholdRealtime()
+  return <>{children}</>
+}
+
 const router = createBrowserRouter([
   { path: "/invite/:token", element: <InviteAcceptPage /> },
   {
-    element: <OnboardingGate><Outlet /></OnboardingGate>,
+    element: <OnboardingGate><RealtimeGate><Outlet /></RealtimeGate></OnboardingGate>,
     children: [
       { path: "/", element: <CategoryListScreen /> },
       { path: "/lists", element: <ListsOverview /> },

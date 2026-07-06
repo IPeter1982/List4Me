@@ -6,6 +6,12 @@ let tokenProvider: TokenProvider = async () => null
 
 export function setTokenProvider(p: TokenProvider) { tokenProvider = p }
 
+export async function getAccessToken(): Promise<string | null> {
+  return tokenProvider()
+}
+
+export const apiBaseUrl = API_URL
+
 export class ApiError extends Error {
   status: number
   body: unknown
