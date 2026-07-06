@@ -1,8 +1,15 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5058"
+const E2E_MODE = import.meta.env.VITE_E2E === "true"
+const E2E_TOKEN_KEY = "l4m_e2e_token"
 
 type TokenProvider = () => Promise<string | null>
 
-let tokenProvider: TokenProvider = async () => null
+// In E2E mode the token is always readable from localStorage — set the
+// default provider at module load so the first render can already inject
+// Authorization headers without waiting for AuthGate's useEffect to run.
+let tokenProvider: TokenProvider = E2E_MODE
+  ? async () => window.localStorage.getItem(E2E_TOKEN_KEY)
+  : async () => null
 
 export function setTokenProvider(p: TokenProvider) { tokenProvider = p }
 
