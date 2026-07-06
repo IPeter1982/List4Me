@@ -5,6 +5,8 @@
     "dev:frontend": "pnpm --filter frontend dev",
     "dev:backend": "dotnet run --project backend/src/List4Me.Api",
     "db:up": "docker compose up -d postgres",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "test:e2e": "pnpm --filter e2e test",
+    "e2e:stack": "pnpm --filter e2e stack"
   }
 }
