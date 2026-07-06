@@ -7,6 +7,7 @@ using List4Me.Api.Features.Households;
 using List4Me.Api.Features.Lists;
 using List4Me.Api.Features.Products;
 using List4Me.Api.Features.Templates;
+using List4Me.Api.Realtime;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
@@ -50,12 +51,15 @@ builder.Services
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<HouseholdContext>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IRealtimeNotifier, RealtimeNotifier>();
 
 var allowedOrigin = builder.Configuration["AllowedOrigin"] ?? "http://localhost:5173";
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .WithOrigins(allowedOrigin)
     .AllowAnyHeader()
-    .AllowAnyMethod()));
+    .AllowAnyMethod()
+    .AllowCredentials()));
 
 var app = builder.Build();
 
@@ -84,6 +88,8 @@ app.MapCategories();
 app.MapProducts();
 app.MapLists();
 app.MapTemplates();
+
+app.MapHub<HouseholdHub>("/hubs/household").RequireAuthorization();
 
 app.Run();
 
