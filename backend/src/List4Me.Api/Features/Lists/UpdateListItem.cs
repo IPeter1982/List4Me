@@ -1,5 +1,6 @@
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
+using List4Me.Api.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace List4Me.Api.Features.Lists;
@@ -10,7 +11,8 @@ public static class UpdateListItem
         Guid listId, Guid itemId,
         UpdateListItemRequest req,
         AppDbContext db,
-        HouseholdContext hc)
+        HouseholdContext hc,
+        IRealtimeNotifier notifier)
     {
         if (hc.Member is null) return Results.NotFound();
         var householdId = hc.Member.HouseholdId;
@@ -31,9 +33,11 @@ public static class UpdateListItem
         item.List.UpdatedAt = item.UpdatedAt;
         await db.SaveChangesAsync();
 
-        return Results.Ok(new ListItemDto(
+        var dto = new ListItemDto(
             item.Id, item.ProductId, item.Product.Name, item.Product.CategoryId,
             item.Quantity, item.Unit, item.ExpiresOn, item.Note,
-            item.IsCompleted, item.CompletedAt, item.CompletedByMemberId, item.SortOrder));
+            item.IsCompleted, item.CompletedAt, item.CompletedByMemberId, item.SortOrder);
+        await notifier.ListItemUpdated(householdId, listId, dto);
+        return Results.Ok(dto);
     }
 }

@@ -1,12 +1,13 @@
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
+using List4Me.Api.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace List4Me.Api.Features.Categories;
 
 public static class DeleteCategory
 {
-    public static async Task<IResult> Handle(Guid id, bool? force, AppDbContext db, HouseholdContext hc)
+    public static async Task<IResult> Handle(Guid id, bool? force, AppDbContext db, HouseholdContext hc, IRealtimeNotifier notifier)
     {
         if (hc.Member is null) return Results.NotFound();
         var householdId = hc.Member.HouseholdId;
@@ -32,6 +33,7 @@ public static class DeleteCategory
         foreach (var s in cat.Subcategories) s.DeletedAt = now;
         foreach (var p in cat.Products) p.DeletedAt = now;
         await db.SaveChangesAsync();
+        await notifier.CategoryDeleted(householdId, id);
         return Results.NoContent();
     }
 }

@@ -1,6 +1,7 @@
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
 using List4Me.Api.Domain;
+using List4Me.Api.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace List4Me.Api.Features.Templates;
@@ -10,7 +11,8 @@ public static class CreateTemplate
     public static async Task<IResult> Handle(
         CreateTemplateRequest req,
         AppDbContext db,
-        HouseholdContext hc)
+        HouseholdContext hc,
+        IRealtimeNotifier notifier)
     {
         if (hc.Member is null) return Results.NotFound();
         var householdId = hc.Member.HouseholdId;
@@ -56,8 +58,11 @@ public static class CreateTemplate
 
         await db.SaveChangesAsync();
 
-        return Results.Created($"/api/templates/{template.Id}",
-            await LoadDetail(db, template.Id, householdId));
+        var detail = await LoadDetail(db, template.Id, householdId);
+        await notifier.TemplateCreated(householdId, new TemplateSummaryDto(
+            detail.Id, detail.CategoryId, detail.Name, detail.CreatedByMemberId,
+            detail.Items.Count, detail.CreatedAt));
+        return Results.Created($"/api/templates/{template.Id}", detail);
     }
 
     internal static async Task<TemplateDetailDto> LoadDetail(

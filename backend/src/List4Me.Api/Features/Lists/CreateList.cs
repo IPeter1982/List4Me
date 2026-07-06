@@ -1,6 +1,7 @@
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
 using List4Me.Api.Domain;
+using List4Me.Api.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace List4Me.Api.Features.Lists;
@@ -10,7 +11,8 @@ public static class CreateList
     public static async Task<IResult> Handle(
         CreateListRequest req,
         AppDbContext db,
-        HouseholdContext hc)
+        HouseholdContext hc,
+        IRealtimeNotifier notifier)
     {
         if (hc.Member is null) return Results.NotFound();
         var householdId = hc.Member.HouseholdId;
@@ -60,8 +62,9 @@ public static class CreateList
 
         await db.SaveChangesAsync();
 
-        return Results.Created($"/api/lists/{list.Id}",
-            await LoadDetail(db, list.Id, householdId));
+        var detail = await LoadDetail(db, list.Id, householdId);
+        await notifier.ListCreated(householdId, detail);
+        return Results.Created($"/api/lists/{list.Id}", detail);
     }
 
     internal static async Task<ListDetailDto> LoadDetail(AppDbContext db, Guid id, Guid householdId)

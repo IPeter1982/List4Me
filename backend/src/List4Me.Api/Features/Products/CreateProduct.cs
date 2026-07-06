@@ -1,6 +1,7 @@
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
 using List4Me.Api.Domain;
+using List4Me.Api.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace List4Me.Api.Features.Products;
@@ -11,7 +12,8 @@ public static class CreateProduct
         Guid categoryId,
         CreateProductRequest req,
         AppDbContext db,
-        HouseholdContext hc)
+        HouseholdContext hc,
+        IRealtimeNotifier notifier)
     {
         if (hc.Member is null) return Results.NotFound();
         var householdId = hc.Member.HouseholdId;
@@ -36,6 +38,7 @@ public static class CreateProduct
 
         var dto = new ProductDto(product.Id, product.CategoryId, product.Name,
             product.DefaultQuantity, product.DefaultUnit, IsFavorite: false);
+        await notifier.ProductCreated(householdId, dto);
         return Results.Created($"/api/products/{product.Id}", dto);
     }
 }
