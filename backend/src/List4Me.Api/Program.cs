@@ -1,3 +1,4 @@
+using System.Text;
 using FluentValidation;
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
@@ -7,8 +8,11 @@ using List4Me.Api.Features.Households;
 using List4Me.Api.Features.Lists;
 using List4Me.Api.Features.Products;
 using List4Me.Api.Features.Templates;
+using List4Me.Api.Features.TestOnly;
 using List4Me.Api.Realtime;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Events;
 
@@ -36,7 +40,7 @@ var auth0Domain = builder.Configuration["Auth0:Domain"];
 var auth0Audience = builder.Configuration["Auth0:Audience"];
 
 builder.Services
-    .AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.Authority = $"https://{auth0Domain}/";
@@ -47,6 +51,31 @@ builder.Services
             RoleClaimType = "https://list4me/roles"
         };
     });
+
+if (builder.Environment.EnvironmentName == "Test")
+{
+    var testKeyMaterial = builder.Configuration["Test:SigningKey"]
+        ?? "test-signing-key-must-be-at-least-32-bytes-long!!";
+    var testKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(testKeyMaterial));
+    builder.Services.PostConfigure<JwtBearerOptions>(
+        JwtBearerDefaults.AuthenticationScheme,
+        options =>
+        {
+            options.Authority = null;
+            options.MetadataAddress = null!;
+            options.Audience = TestLoginAsHandler.TestAudience;
+            options.TokenValidationParameters = new()
+            {
+                ValidateIssuer = false,
+                ValidateAudience = true,
+                ValidAudience = TestLoginAsHandler.TestAudience,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = testKey,
+                NameClaimType = "name",
+                RoleClaimType = "https://list4me/roles"
+            };
+        });
+}
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<HouseholdContext>();
@@ -90,6 +119,11 @@ app.MapLists();
 app.MapTemplates();
 
 app.MapHub<HouseholdHub>("/hubs/household").RequireAuthorization();
+
+if (app.Environment.EnvironmentName is "Test" or "Development")
+{
+    app.MapTestEndpoints();
+}
 
 app.Run();
 
