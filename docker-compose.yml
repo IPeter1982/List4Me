@@ -16,5 +16,23 @@ services:
       timeout: 3s
       retries: 10
 
+  backend:
+    profiles: ["prod-like"]
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: list4me-backend
+    environment:
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=list4me;Username=list4me;Password=list4me_dev"
+      Auth0__Domain: ${AUTH0_DOMAIN:-}
+      Auth0__Audience: ${AUTH0_AUDIENCE:-}
+      AllowedOrigin: ${ALLOWED_ORIGIN:-http://localhost:5173}
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "5058:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   pgdata:
