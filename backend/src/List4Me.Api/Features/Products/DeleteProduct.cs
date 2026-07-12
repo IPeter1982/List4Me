@@ -1,12 +1,13 @@
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
+using List4Me.Api.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace List4Me.Api.Features.Products;
 
 public static class DeleteProduct
 {
-    public static async Task<IResult> Handle(Guid id, AppDbContext db, HouseholdContext hc)
+    public static async Task<IResult> Handle(Guid id, AppDbContext db, HouseholdContext hc, IRealtimeNotifier notifier)
     {
         if (hc.Member is null) return Results.NotFound();
         var householdId = hc.Member.HouseholdId;
@@ -19,6 +20,7 @@ public static class DeleteProduct
 
         product.DeletedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync();
+        await notifier.ProductDeleted(householdId, product.CategoryId, id);
         return Results.NoContent();
     }
 }

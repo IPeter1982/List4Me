@@ -1,3 +1,4 @@
+using System.Text;
 using FluentValidation;
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
@@ -7,7 +8,11 @@ using List4Me.Api.Features.Households;
 using List4Me.Api.Features.Lists;
 using List4Me.Api.Features.Products;
 using List4Me.Api.Features.Templates;
+using List4Me.Api.Features.TestOnly;
+using List4Me.Api.Realtime;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Events;
 
@@ -28,14 +33,23 @@ builder.Host.UseSerilog((ctx, cfg) =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<AppDbContext>(o =>
-    o.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+var connectionString = builder.Configuration.GetConnectionString("Default");
+if (!string.IsNullOrEmpty(connectionString) && connectionString.StartsWith("postgres://"))
+{
+    var uri = new Uri(connectionString);
+    var userInfo = uri.UserInfo.Split(':', 2);
+    connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+    builder.Configuration["ConnectionStrings:Default"] = connectionString;
+}
+
+builder.Services.AddDbContext<AppDbContext>(o => o.UseNpgsql(connectionString));
 
 var auth0Domain = builder.Configuration["Auth0:Domain"];
 var auth0Audience = builder.Configuration["Auth0:Audience"];
 
 builder.Services
-    .AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.Authority = $"https://{auth0Domain}/";
@@ -47,15 +61,43 @@ builder.Services
         };
     });
 
+if (builder.Environment.EnvironmentName == "Test")
+{
+    var testKeyMaterial = builder.Configuration["Test:SigningKey"]
+        ?? "test-signing-key-must-be-at-least-32-bytes-long!!";
+    var testKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(testKeyMaterial));
+    builder.Services.PostConfigure<JwtBearerOptions>(
+        JwtBearerDefaults.AuthenticationScheme,
+        options =>
+        {
+            options.Authority = null;
+            options.MetadataAddress = null!;
+            options.Audience = TestLoginAsHandler.TestAudience;
+            options.TokenValidationParameters = new()
+            {
+                ValidateIssuer = false,
+                ValidateAudience = true,
+                ValidAudience = TestLoginAsHandler.TestAudience,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = testKey,
+                NameClaimType = "name",
+                RoleClaimType = "https://list4me/roles"
+            };
+        });
+}
+
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<HouseholdContext>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IRealtimeNotifier, RealtimeNotifier>();
 
 var allowedOrigin = builder.Configuration["AllowedOrigin"] ?? "http://localhost:5173";
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .WithOrigins(allowedOrigin)
     .AllowAnyHeader()
-    .AllowAnyMethod()));
+    .AllowAnyMethod()
+    .AllowCredentials()));
 
 var app = builder.Build();
 
@@ -84,6 +126,13 @@ app.MapCategories();
 app.MapProducts();
 app.MapLists();
 app.MapTemplates();
+
+app.MapHub<HouseholdHub>("/hubs/household").RequireAuthorization();
+
+if (app.Environment.EnvironmentName is "Test" or "Development")
+{
+    app.MapTestEndpoints();
+}
 
 app.Run();
 

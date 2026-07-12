@@ -1,0 +1,40 @@
+name: backend
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "Dockerfile.backend"
+      - ".github/workflows/backend.yml"
+  push:
+    branches: [main]
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore backend/List4Me.slnx
+
+      - name: Build
+        run: dotnet build backend/List4Me.slnx --no-restore --configuration Release -warnaserror
+
+      - name: Test (Testcontainers via Docker)
+        run: dotnet test backend/List4Me.slnx --no-build --configuration Release --logger "trx" --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: TestResults/

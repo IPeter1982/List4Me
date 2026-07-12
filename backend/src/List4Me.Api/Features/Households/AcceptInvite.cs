@@ -1,13 +1,14 @@
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
 using List4Me.Api.Domain;
+using List4Me.Api.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace List4Me.Api.Features.Households;
 
 public static class AcceptInvite
 {
-    public static async Task<IResult> Handle(Guid token, AppDbContext db, HouseholdContext hc)
+    public static async Task<IResult> Handle(Guid token, AppDbContext db, HouseholdContext hc, IRealtimeNotifier notifier)
     {
         if (hc.User is null) return Results.Unauthorized();
         if (hc.Member is not null) return Results.Conflict(new { message = "Already in a household" });
@@ -28,6 +29,9 @@ public static class AcceptInvite
         invite.UsedAt = DateTimeOffset.UtcNow;
         db.HouseholdMembers.Add(member);
         await db.SaveChangesAsync();
+
+        await notifier.MemberJoined(invite.HouseholdId, new HouseholdMemberDto(
+            member.Id, member.DisplayName, member.Role.ToString(), member.JoinedAt));
         return Results.Ok();
     }
 }

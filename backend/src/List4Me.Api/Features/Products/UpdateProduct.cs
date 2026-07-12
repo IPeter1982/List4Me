@@ -1,5 +1,6 @@
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
+using List4Me.Api.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace List4Me.Api.Features.Products;
@@ -10,7 +11,8 @@ public static class UpdateProduct
         Guid id,
         UpdateProductRequest req,
         AppDbContext db,
-        HouseholdContext hc)
+        HouseholdContext hc,
+        IRealtimeNotifier notifier)
     {
         if (hc.Member is null) return Results.NotFound();
         var householdId = hc.Member.HouseholdId;
@@ -30,7 +32,9 @@ public static class UpdateProduct
         var isFav = await db.FavoriteProducts.AnyAsync(f =>
             f.HouseholdMemberId == hc.Member.Id && f.ProductId == id);
 
-        return Results.Ok(new ProductDto(product.Id, product.CategoryId, product.Name,
-            product.DefaultQuantity, product.DefaultUnit, isFav));
+        var dto = new ProductDto(product.Id, product.CategoryId, product.Name,
+            product.DefaultQuantity, product.DefaultUnit, isFav);
+        await notifier.ProductUpdated(householdId, dto);
+        return Results.Ok(dto);
     }
 }

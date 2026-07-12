@@ -1,0 +1,34 @@
+# syntax=docker/dockerfile:1
+ARG DOTNET_VERSION=10.0
+
+FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
+WORKDIR /src
+
+COPY backend/global.json ./backend/
+COPY backend/List4Me.slnx ./backend/
+COPY backend/src/List4Me.Api/List4Me.Api.csproj ./backend/src/List4Me.Api/
+
+RUN dotnet restore ./backend/src/List4Me.Api/List4Me.Api.csproj
+
+COPY backend/src ./backend/src
+
+RUN dotnet publish ./backend/src/List4Me.Api/List4Me.Api.csproj \
+    -c Release \
+    -o /out \
+    /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION} AS runtime
+WORKDIR /app
+
+# .NET 10 aspnet image already ships a non-root user "app" (uid 1654). Reuse it.
+USER app
+
+COPY --from=build --chown=app:app /out ./
+
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD wget -qO- http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["dotnet", "List4Me.Api.dll"]

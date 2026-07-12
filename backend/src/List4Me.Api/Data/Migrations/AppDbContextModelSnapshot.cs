@@ -221,6 +221,8 @@ namespace List4Me.Api.Data.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("FromTemplateId");
+
                     b.HasIndex("HouseholdId", "ArchivedAt", "DeletedAt");
 
                     b.ToTable("Lists", (string)null);
@@ -446,6 +448,11 @@ namespace List4Me.Api.Data.Migrations
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("List4Me.Api.Domain.ListTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("FromTemplateId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Category");
                 });

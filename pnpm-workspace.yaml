@@ -1,4 +1,6 @@
 packages:
   - "frontend"
+  - "e2e"
 allowBuilds:
   browser-tabs-lock: true
+  esbuild: true

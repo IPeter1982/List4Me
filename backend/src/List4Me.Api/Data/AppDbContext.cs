@@ -81,6 +81,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasIndex(x => new { x.HouseholdId, x.ArchivedAt, x.DeletedAt });
             e.HasOne(x => x.Category).WithMany()
                 .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<ListTemplate>().WithMany()
+                .HasForeignKey(x => x.FromTemplateId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
         });
 
         mb.Entity<ListItem>(e =>

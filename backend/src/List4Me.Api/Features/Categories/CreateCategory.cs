@@ -2,6 +2,7 @@ using FluentValidation;
 using List4Me.Api.Auth;
 using List4Me.Api.Data;
 using List4Me.Api.Domain;
+using List4Me.Api.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace List4Me.Api.Features.Categories;
@@ -21,7 +22,7 @@ public class CreateCategoryValidator : AbstractValidator<CreateCategoryRequest>
 
 public static class CreateCategory
 {
-    public static async Task<IResult> Handle(CreateCategoryRequest req, AppDbContext db, HouseholdContext hc)
+    public static async Task<IResult> Handle(CreateCategoryRequest req, AppDbContext db, HouseholdContext hc, IRealtimeNotifier notifier)
     {
         if (hc.Member is null) return Results.NotFound();
         var householdId = hc.Member.HouseholdId;
@@ -60,6 +61,7 @@ public static class CreateCategory
 
         var dto = new CategoryDto(cat.Id, cat.Name, cat.IconKey, cat.ParentCategoryId,
             cat.CompletedLabel, cat.SortOrder, Array.Empty<CategoryDto>());
+        await notifier.CategoryCreated(householdId, dto);
         return Results.Created($"/api/categories/{cat.Id}", dto);
     }
 }

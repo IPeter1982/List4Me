@@ -137,6 +137,27 @@ public class TemplateEndpointTests(PostgresFixture pg)
     }
 
     [Fact]
+    public async Task Delete_template_nulls_FromTemplateId_on_child_lists()
+    {
+        await using var factory = new ApiFactory(pg);
+        var (client, categoryId) = await Setup(factory, "auth0|tpl-fk", "FK");
+
+        var tplResp = await client.PostAsJsonAsync("/api/templates",
+            new CreateTemplateRequest("Parent", categoryId, null));
+        var tplId = (await tplResp.Content.ReadFromJsonAsync<TemplateDetailDto>())!.Id;
+
+        var listResp = await client.PostAsJsonAsync("/api/lists",
+            new CreateListRequest("Child", categoryId, tplId));
+        var listId = (await listResp.Content.ReadFromJsonAsync<ListDetailDto>())!.Id;
+
+        (await client.DeleteAsync($"/api/templates/{tplId}"))
+            .StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var refetched = await client.GetFromJsonAsync<ListDetailDto>($"/api/lists/{listId}");
+        refetched!.FromTemplateId.Should().BeNull();
+    }
+
+    [Fact]
     public async Task Templates_are_isolated_across_households()
     {
         await using var factory = new ApiFactory(pg);
