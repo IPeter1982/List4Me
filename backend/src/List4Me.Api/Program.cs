@@ -35,11 +35,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
 var connectionString = builder.Configuration.GetConnectionString("Default");
-if (!string.IsNullOrEmpty(connectionString) && connectionString.StartsWith("postgres://"))
+if (!string.IsNullOrEmpty(connectionString) &&
+    (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://")))
 {
     var uri = new Uri(connectionString);
     var userInfo = uri.UserInfo.Split(':', 2);
-    connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+    var host = uri.Host;
+    var requiresSsl = !host.EndsWith(".railway.internal", StringComparison.OrdinalIgnoreCase);
+    var sslSuffix = requiresSsl ? ";SSL Mode=Require;Trust Server Certificate=true" : "";
+    connectionString = $"Host={host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={Uri.UnescapeDataString(userInfo[1])}{sslSuffix}";
     builder.Configuration["ConnectionStrings:Default"] = connectionString;
 }
 
