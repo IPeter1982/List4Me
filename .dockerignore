@@ -2,12 +2,12 @@
 **/obj
 **/node_modules
 **/dist
-frontend
+**/.next
+**/playwright-report
+**/test-results
 e2e
 .git
 .github
 .claude
 docs
-test-results
-playwright-report
 *.md

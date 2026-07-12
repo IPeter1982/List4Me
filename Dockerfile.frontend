@@ -1,0 +1,38 @@
+# syntax=docker/dockerfile:1
+ARG NODE_VERSION=20-alpine
+ARG NGINX_VERSION=1.27-alpine
+
+FROM node:${NODE_VERSION} AS build
+WORKDIR /repo
+
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY frontend/package.json ./frontend/
+
+RUN pnpm install --frozen-lockfile --filter=frontend...
+
+COPY frontend ./frontend
+
+ARG VITE_API_URL
+ARG VITE_AUTH0_DOMAIN
+ARG VITE_AUTH0_CLIENT_ID
+ARG VITE_AUTH0_AUDIENCE
+
+ENV VITE_API_URL=$VITE_API_URL \
+    VITE_AUTH0_DOMAIN=$VITE_AUTH0_DOMAIN \
+    VITE_AUTH0_CLIENT_ID=$VITE_AUTH0_CLIENT_ID \
+    VITE_AUTH0_AUDIENCE=$VITE_AUTH0_AUDIENCE
+
+RUN pnpm --filter frontend build
+
+FROM nginx:${NGINX_VERSION} AS runtime
+
+COPY frontend/nginx.conf /etc/nginx/templates/default.conf.template
+COPY --from=build /repo/frontend/dist /usr/share/nginx/html
+
+ENV PORT=8080
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget -qO- http://localhost:${PORT}/ >/dev/null || exit 1
