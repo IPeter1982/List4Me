@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "dotnet",
+  "build": {
+    "buildCommand": "dotnet publish src/List4Me.Api/List4Me.Api.csproj -c Release -o out"
+  },
+  "deploy": {
+    "startCommand": "./out/List4Me.Api"
+  }
+}
