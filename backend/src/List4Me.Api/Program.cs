@@ -35,12 +35,24 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
 var connectionString = builder.Configuration.GetConnectionString("Default");
-if (!string.IsNullOrEmpty(connectionString) && connectionString.StartsWith("postgres://"))
+if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("://"))
 {
     var uri = new Uri(connectionString);
     var userInfo = uri.UserInfo.Split(':', 2);
-    connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+    var host = uri.Host;
+    var requiresSsl = !host.EndsWith(".railway.internal", StringComparison.OrdinalIgnoreCase);
+    var sslSuffix = requiresSsl ? ";SSL Mode=Require;Trust Server Certificate=true" : "";
+    connectionString = $"Host={host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={Uri.UnescapeDataString(userInfo[1])}{sslSuffix}";
     builder.Configuration["ConnectionStrings:Default"] = connectionString;
+    Console.WriteLine($"[startup] Normalized URI-format DATABASE_URL: host={host} port={uri.Port} db={uri.AbsolutePath.TrimStart('/')} ssl={requiresSsl}");
+}
+else if (!string.IsNullOrEmpty(connectionString))
+{
+    Console.WriteLine("[startup] Using DATABASE_URL as key=value connection string (not URI-shaped)");
+}
+else
+{
+    Console.WriteLine("[startup] WARNING: ConnectionStrings__Default is empty or unset");
 }
 
 builder.Services.AddDbContext<AppDbContext>(o => o.UseNpgsql(connectionString));
