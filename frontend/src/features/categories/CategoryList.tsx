@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus, Pencil, Trash2, Package } from "lucide-react"
+import { Plus, PencilSimple, Trash, Package } from "@phosphor-icons/react"
 import { PageShell } from "@/components/PageShell"
 import { Button } from "@/components/ui/button"
 import { ApiError } from "@/lib/api"
@@ -43,7 +43,7 @@ export function CategoryListScreen() {
                        shadow-lg flex items-center justify-center hover:bg-blue-700"
             aria-label="Új kategória"
           >
-            <Plus className="size-6" />
+            <Plus size={24} weight="duotone" />
           </button>
         </>
       )}
@@ -110,10 +110,10 @@ function SelectedCategoryDrawer({
         <h3 id="selected-category-title" className="text-lg font-semibold">{category.name}</h3>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={onOpenProducts} className="flex-1">
-            <Package className="size-4 mr-2" /> Termékek
+            <Package size={16} weight="duotone" className="mr-2" /> Termékek
           </Button>
           <Button variant="secondary" onClick={onEdit} className="flex-1">
-            <Pencil className="size-4 mr-2" /> Szerkeszt
+            <PencilSimple size={16} weight="duotone" className="mr-2" /> Szerkeszt
           </Button>
           <Button
             variant="danger"
@@ -123,7 +123,7 @@ function SelectedCategoryDrawer({
             }}
             className="flex-1"
           >
-            <Trash2 className="size-4 mr-2" />
+            <Trash size={16} weight="duotone" className="mr-2" />
             {confirmForce ? "Igen, törlés" : "Törlés"}
           </Button>
         </div>

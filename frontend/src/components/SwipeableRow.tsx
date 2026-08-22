@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback } from "react"
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion"
-import { Check, Trash2 } from "lucide-react"
+import { CheckCircle, Trash } from "@phosphor-icons/react"
 
 type Props = {
   children: ReactNode
@@ -18,11 +18,6 @@ export function SwipeableRow({
   threshold = 100,
 }: Props) {
   const x = useMotionValue(0)
-  const bg = useTransform(
-    x,
-    [-threshold, 0, threshold],
-    ["#dc2626", "transparent", "#16a34a"],
-  )
   const rightOpacity = useTransform(x, [0, threshold * 0.7, threshold], [0, 0.6, 1])
   const leftOpacity = useTransform(x, [-threshold, -threshold * 0.7, 0], [1, 0.6, 0])
 
@@ -38,23 +33,26 @@ export function SwipeableRow({
   return (
     <div className="relative overflow-hidden">
       <motion.div
-        className="pointer-events-none absolute inset-0 flex items-center justify-between px-4 text-white"
-        style={{ background: bg }}
+        className="pointer-events-none absolute inset-0 flex items-center justify-end gap-2 px-6"
+        style={{ background: "var(--dgBg)", color: "var(--dg)", opacity: leftOpacity }}
       >
-        <motion.span className="flex items-center gap-1" style={{ opacity: leftOpacity }}>
-          <Trash2 className="size-4" /> Törlés
-        </motion.span>
-        <motion.span className="flex items-center gap-1" style={{ opacity: rightOpacity }}>
-          <Check className="size-4" /> {rightLabel}
-        </motion.span>
+        <span className="text-sm font-medium">Törlés</span>
+        <Trash size={22} weight="duotone" />
+      </motion.div>
+      <motion.div
+        className="pointer-events-none absolute inset-0 flex items-center gap-2 px-6"
+        style={{ background: "var(--okBg)", color: "var(--ok)", opacity: rightOpacity }}
+      >
+        <CheckCircle size={22} weight="duotone" />
+        <span className="text-sm font-medium">{rightLabel}</span>
       </motion.div>
       <motion.div
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.5}
         onDragEnd={onDragEnd}
-        style={{ x }}
-        className="relative bg-white dark:bg-neutral-900"
+        style={{ x, background: "var(--bg)" }}
+        className="relative"
       >
         {children}
       </motion.div>

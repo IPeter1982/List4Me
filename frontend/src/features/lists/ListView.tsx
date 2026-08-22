@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Archive, ArrowLeft, BookmarkPlus, Trash2 } from "lucide-react"
+import { Archive, ArrowLeft, BookmarkSimple, Trash } from "@phosphor-icons/react"
 import { BottomNav } from "@/components/BottomNav"
 import { Button } from "@/components/ui/button"
 import { listsApi } from "./api"
@@ -75,7 +75,7 @@ export function ListView() {
             onClick={() => navigate("/lists")}
             className="size-11 p-0"
           >
-            <ArrowLeft className="size-5" />
+            <ArrowLeft size={20} weight="duotone" />
           </Button>
           <input
             className="flex-1 bg-transparent text-lg font-semibold outline-none px-1 min-h-11"
@@ -89,10 +89,10 @@ export function ListView() {
             aria-label="Lista neve"
           />
           <Button variant="ghost" aria-label="Sablonként mentés" onClick={() => setSaveTplOpen(true)} className="size-11 p-0">
-            <BookmarkPlus className="size-5" />
+            <BookmarkSimple size={20} weight="duotone" />
           </Button>
           <Button variant="ghost" aria-label="Archiválás" onClick={() => archive.mutate()} className="size-11 p-0">
-            <Archive className="size-5" />
+            <Archive size={20} weight="duotone" />
           </Button>
           <Button
             variant="ghost"
@@ -102,7 +102,7 @@ export function ListView() {
             }}
             className="size-11 p-0 text-danger"
           >
-            <Trash2 className="size-5" />
+            <Trash size={20} weight="duotone" />
           </Button>
         </div>
         <div className="px-3 py-2 border-t bg-white dark:bg-neutral-900">

@@ -1,4 +1,4 @@
-import { Star } from "lucide-react"
+import { Star } from "@phosphor-icons/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { productsApi } from "./api"
 import type { ProductDto } from "./types"
@@ -38,7 +38,7 @@ export function FavoriteChip({ productId, isFavorite, categoryId }: Props) {
       onClick={() => toggle.mutate()}
       className="p-2 text-neutral-400"
     >
-      <Star className={"size-5 " + (isFavorite ? "fill-yellow-400 text-yellow-400" : "")} />
+      <Star size={20} weight={isFavorite ? "fill" : "duotone"} className={isFavorite ? "text-yellow-400" : ""} />
     </button>
   )
 }

@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, Plus, Search, Star } from "lucide-react"
+import { ArrowLeft, Plus, MagnifyingGlass, Star } from "@phosphor-icons/react"
 import { BottomNav } from "@/components/BottomNav"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,10 +39,10 @@ export function ProductList() {
             onClick={() => navigate(-1)}
             className="size-11 p-0"
           >
-            <ArrowLeft className="size-5" />
+            <ArrowLeft size={20} weight="duotone" />
           </Button>
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
+            <MagnifyingGlass size={16} weight="duotone" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
             <Input
               className="pl-9"
               placeholder="Termék keresése…"
@@ -64,7 +64,7 @@ export function ProductList() {
               (favOnly ? "bg-brand text-white border-brand" : "bg-white dark:bg-neutral-900")
             }
           >
-            <Star className={"size-4 " + (favOnly ? "fill-current" : "")} />
+            <Star size={16} weight={favOnly ? "fill" : "duotone"} />
             Kedvencek
           </button>
         </div>
@@ -116,7 +116,7 @@ export function ProductList() {
           onClick={() => setEditing("new")}
           className="fixed bottom-24 right-4 z-20 size-14 rounded-full bg-brand text-white shadow-lg flex items-center justify-center hover:bg-blue-700"
         >
-          <Plus className="size-6" />
+          <Plus size={24} weight="duotone" />
         </button>
       </main>
 

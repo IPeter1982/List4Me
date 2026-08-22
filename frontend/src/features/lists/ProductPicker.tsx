@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Plus, Search, Star } from "lucide-react"
+import { Plus, MagnifyingGlass, Star } from "@phosphor-icons/react"
 import { Input } from "@/components/ui/input"
 import { productsApi } from "@/features/products/api"
 import type { ProductDto } from "@/features/products/types"
@@ -68,7 +68,7 @@ export function ProductPicker({ listId, categoryId }: Props) {
   return (
     <div>
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
+        <MagnifyingGlass size={16} weight="duotone" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
         <Input
           ref={inputRef}
           className="pl-9"
@@ -99,7 +99,7 @@ export function ProductPicker({ listId, categoryId }: Props) {
               onClick={() => add.mutate(p.id)}
               className="inline-flex items-center gap-1 rounded-full border bg-white dark:bg-neutral-900 px-2 py-1 text-xs"
             >
-              <Star className="size-3 fill-yellow-400 text-yellow-400" />
+              <Star size={12} weight="fill" className="text-yellow-400" />
               {p.name}
             </button>
           ))}
@@ -118,7 +118,7 @@ export function ProductPicker({ listId, categoryId }: Props) {
                 className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 onClick={() => createAndAdd.mutate(debouncedQ)}
               >
-                <Plus className="size-4" />
+                <Plus size={16} weight="duotone" />
                 Új termék: „{debouncedQ}"
               </button>
             </li>

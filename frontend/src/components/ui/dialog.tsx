@@ -1,7 +1,7 @@
 import { forwardRef } from "react"
 import type { ComponentPropsWithoutRef, ElementRef, ReactNode } from "react"
 import * as D from "@radix-ui/react-dialog"
-import { X } from "lucide-react"
+import { X } from "@phosphor-icons/react"
 import { cn } from "@/lib/cn"
 
 export const Dialog = D.Root
@@ -30,7 +30,7 @@ export const DialogContent = forwardRef<ElementRef<typeof D.Content>, DialogCont
           aria-label="Close"
           className="absolute right-3 top-3 rounded-full p-1 hover:bg-neutral-100"
         >
-          <X className="size-5" />
+          <X size={20} weight="duotone" />
         </D.Close>
         {children}
       </D.Content>

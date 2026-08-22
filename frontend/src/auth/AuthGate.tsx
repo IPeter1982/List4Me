@@ -1,5 +1,5 @@
 import { useAuth0 } from "@auth0/auth0-react"
-import { useEffect, type ReactNode } from "react"
+import { useMemo, type ReactNode } from "react"
 import { setTokenProvider } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 
@@ -9,13 +9,15 @@ const E2E_TOKEN_KEY = "l4m_e2e_token"
 export function AuthGate({ children }: { children: ReactNode }) {
   const { isLoading, isAuthenticated, loginWithRedirect, getAccessTokenSilently, logout } = useAuth0()
 
-  useEffect(() => {
-    setTokenProvider(async () => {
-      if (E2E_MODE) return window.localStorage.getItem(E2E_TOKEN_KEY)
-      if (!isAuthenticated) return null
-      try { return await getAccessTokenSilently() } catch { return null }
-    })
+  const provider = useMemo(() => async (): Promise<string | null> => {
+    if (E2E_MODE) return window.localStorage.getItem(E2E_TOKEN_KEY)
+    if (!isAuthenticated) return null
+    try { return await getAccessTokenSilently() } catch { return null }
   }, [isAuthenticated, getAccessTokenSilently])
+
+  // Register during render so the first child fetch already sees it.
+  // Module-level assignment is idempotent and safe under StrictMode double-render.
+  setTokenProvider(provider)
 
   if (E2E_MODE) {
     const hasToken = window.localStorage.getItem(E2E_TOKEN_KEY) !== null

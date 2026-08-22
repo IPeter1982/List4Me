@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router"
 import { useQuery } from "@tanstack/react-query"
-import { Archive, Plus } from "lucide-react"
+import { Archive, Plus } from "@phosphor-icons/react"
 import { BottomNav } from "@/components/BottomNav"
 import { Button } from "@/components/ui/button"
 import { categoriesApi } from "@/features/categories/api"
@@ -58,7 +58,7 @@ export function ListsOverview() {
             aria-label={showArchived ? "Aktív listák" : "Archívum"}
             className="px-3"
           >
-            <Archive className="size-4 mr-1" />
+            <Archive size={16} weight="duotone" className="mr-1" />
             {showArchived ? "Aktív" : "Archívum"}
           </Button>
         </div>
@@ -101,7 +101,7 @@ export function ListsOverview() {
           onClick={() => setCreating(true)}
           className="fixed bottom-24 right-4 z-20 size-14 rounded-full bg-brand text-white shadow-lg flex items-center justify-center hover:bg-blue-700"
         >
-          <Plus className="size-6" />
+          <Plus size={24} weight="duotone" />
         </button>
       )}
 

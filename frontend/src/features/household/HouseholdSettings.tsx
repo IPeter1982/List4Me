@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { useAuth0 } from "@auth0/auth0-react"
-import { Copy, UserPlus } from "lucide-react"
+import { Copy, UserPlus } from "@phosphor-icons/react"
 import { PageShell } from "@/components/PageShell"
 import { Button } from "@/components/ui/button"
 import { householdApi } from "./api"
@@ -44,7 +44,7 @@ export function HouseholdSettingsScreen() {
           <section>
             <h2 className="text-sm font-medium text-neutral-500 mb-2">MEGHÍVÓ</h2>
             <Button onClick={() => createInvite.mutate()} disabled={createInvite.isPending}>
-              <UserPlus className="size-4 mr-2" />Új meghívó
+              <UserPlus size={16} weight="duotone" className="mr-2" />Új meghívó
             </Button>
             {invite && (
               <div className="mt-3 rounded-lg border p-3 bg-white dark:bg-neutral-900">
@@ -54,7 +54,7 @@ export function HouseholdSettingsScreen() {
                   onClick={() => navigator.clipboard.writeText(invite.inviteUrl)}
                   className="mt-2 text-brand text-sm inline-flex items-center gap-1"
                 >
-                  <Copy className="size-4" /> Másolás
+                  <Copy size={16} weight="duotone" /> Másolás
                 </button>
               </div>
             )}

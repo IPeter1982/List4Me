@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ChevronDown, ChevronRight, Trash2 } from "lucide-react"
+import { CaretDown, CaretRight, Trash } from "@phosphor-icons/react"
 import { PageShell } from "@/components/PageShell"
 import { Button } from "@/components/ui/button"
 import { templatesApi } from "./api"
@@ -44,9 +44,9 @@ export function TemplatesList() {
                 aria-expanded={openId === t.id}
               >
                 {openId === t.id ? (
-                  <ChevronDown className="size-4" />
+                  <CaretDown size={16} weight="duotone" />
                 ) : (
-                  <ChevronRight className="size-4" />
+                  <CaretRight size={16} weight="duotone" />
                 )}
                 <span className="flex-1 font-medium">{t.name}</span>
                 <span className="text-sm text-neutral-500">{t.itemCount} tétel</span>
@@ -59,7 +59,7 @@ export function TemplatesList() {
                   if (confirm(`Törli: ${t.name}?`)) del.mutate(t.id)
                 }}
               >
-                <Trash2 className="size-4" />
+                <Trash size={16} weight="duotone" />
               </Button>
             </div>
             {openId === t.id && detailQuery.data && (
