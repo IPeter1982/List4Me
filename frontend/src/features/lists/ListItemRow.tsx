@@ -1,5 +1,6 @@
 import { useRef, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { CheckSquare, DotsSixVertical, Square } from "@phosphor-icons/react"
 import { SwipeableRow } from "@/components/SwipeableRow"
 import { useUndoQueue } from "@/shared/useUndoQueue"
 import { listItemsApi } from "./api"
@@ -7,9 +8,9 @@ import type { ListDetailDto, ListItemDto } from "./types"
 import { ExpiryBadge } from "./ExpiryBadge"
 import { ItemDetailsModal } from "./ItemDetailsModal"
 
-type Props = { listId: string; item: ListItemDto }
+type Props = { listId: string; item: ListItemDto; completedLabel?: string }
 
-export function ListItemRow({ listId, item }: Props) {
+export function ListItemRow({ listId, item, completedLabel }: Props) {
   const qc = useQueryClient()
   const push = useUndoQueue((s) => s.push)
   const [showDetails, setShowDetails] = useState(false)
@@ -48,7 +49,6 @@ export function ListItemRow({ listId, item }: Props) {
   })
 
   const handleSwipeLeft = () => {
-    // Optimistically hide.
     setLocal((l) => ({ ...l, items: l.items.filter((i) => i.id !== item.id) }))
     push({
       label: `Törölve: ${item.productName}`,
@@ -67,18 +67,18 @@ export function ListItemRow({ listId, item }: Props) {
     }
   }
 
+  const CheckboxIcon = item.isCompleted ? CheckSquare : Square
+
   return (
     <>
       <SwipeableRow
         onSwipeLeft={handleSwipeLeft}
         onSwipeRight={item.isCompleted ? undefined : () => complete.mutate()}
+        rightLabel={completedLabel ?? "Kész"}
       >
         <div
-          className={
-            "flex items-center gap-2 px-3 py-3 " +
-            (item.isCompleted ? "text-neutral-500 line-through" : "")
-          }
-          onClick={() => item.isCompleted && uncomplete.mutate()}
+          className="flex items-center gap-3.5 min-h-16 px-5 py-2.5"
+          style={{ boxShadow: "inset 0 -1px 0 var(--line)" }}
           onPointerDown={() => {
             clearLongPress()
             longPressTimer.current = window.setTimeout(() => setShowDetails(true), 500)
@@ -87,15 +87,43 @@ export function ListItemRow({ listId, item }: Props) {
           onPointerCancel={clearLongPress}
           onPointerLeave={clearLongPress}
         >
-          <div className="flex-1 min-w-0">
-            <div className="font-medium truncate">{item.productName}</div>
-            {(item.quantity || item.unit || item.note) && (
-              <div className="text-xs text-neutral-500 truncate">
-                {item.quantity ?? ""} {item.unit ?? ""}{item.note && ` — ${item.note}`}
-              </div>
-            )}
+          <button
+            type="button"
+            aria-label={item.isCompleted ? "Visszaállítás" : "Kész"}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (item.isCompleted) uncomplete.mutate()
+              else complete.mutate()
+            }}
+            className={
+              "grid place-items-center size-12 -my-3 -ml-3 rounded-3xl shrink-0 " +
+              (item.isCompleted ? "text-brand" : "text-ink-muted")
+            }
+          >
+            <CheckboxIcon size={24} weight="duotone" />
+          </button>
+          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+            <span
+              className={
+                "text-[16px] leading-tight truncate " +
+                (item.isCompleted ? "text-ink-muted line-through" : "text-ink")
+              }
+            >
+              {item.productName}
+            </span>
+            <span className="flex flex-wrap items-center gap-2">
+              {(item.quantity != null || item.unit) && (
+                <span className="text-[12.5px] text-ink-muted tabular-nums">
+                  {item.quantity ?? ""} {item.unit ?? ""}
+                </span>
+              )}
+              <ExpiryBadge expiresOn={item.expiresOn} />
+              {item.note && (
+                <span className="text-[11.5px] text-ink-muted truncate">— {item.note}</span>
+              )}
+            </span>
           </div>
-          <ExpiryBadge expiresOn={item.expiresOn} />
+          <DotsSixVertical size={20} weight="duotone" className="text-line shrink-0" />
         </div>
       </SwipeableRow>
 

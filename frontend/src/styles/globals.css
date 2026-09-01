@@ -65,3 +65,8 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Mockup animations */
+@keyframes l4m-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes l4m-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes l4m-snack-in { from { transform: translateY(140%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

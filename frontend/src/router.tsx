@@ -5,6 +5,7 @@ import { householdApi } from "@/features/household/api"
 import { OnboardingHousehold } from "@/auth/OnboardingHousehold"
 import { ApiError } from "@/lib/api"
 import { CategoryListScreen } from "@/features/categories/CategoryList"
+import { CategoryDetail } from "@/features/categories/CategoryDetail"
 import { HouseholdSettingsScreen } from "@/features/household/HouseholdSettings"
 import { InviteAcceptPage } from "@/features/household/InviteAcceptPage"
 import { ProductList } from "@/features/products/ProductList"
@@ -40,6 +41,7 @@ const router = createBrowserRouter([
       { path: "/lists", element: <ListsOverview /> },
       { path: "/lists/:id", element: <ListView /> },
       { path: "/templates", element: <TemplatesList /> },
+      { path: "/categories/:id", element: <CategoryDetail /> },
       { path: "/categories/:id/products", element: <ProductList /> },
       { path: "/settings", element: <HouseholdSettingsScreen /> },
       { path: "*", element: <Navigate to="/" replace /> }

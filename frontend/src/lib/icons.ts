@@ -1,43 +1,44 @@
 import {
-  ShoppingCart, ShoppingBag, Utensils, Apple, Carrot, Beef, Fish,
-  Milk, Coffee, Wine, Beer, Cookie, Cake, Pizza, Sandwich,
-  Refrigerator, Snowflake, Thermometer, Flame,
-  Palmtree, Sun, Umbrella, Tent, Backpack, Camera, Car, Plane, Luggage,
+  ShoppingCart, ShoppingBag, ForkKnife, Orange, Carrot, Cow, Fish,
+  Drop, Coffee, Wine, BeerBottle, Cookie, Cake, Pizza, Hamburger,
+  ThermometerCold, Snowflake, Thermometer, Flame,
+  Tree, Sun, Umbrella, Tent, Backpack, Camera, Car, Airplane, SuitcaseRolling,
   Briefcase, Gift, Heart, Star,
   Pill, Syringe, Baby, Dog, Cat,
-  Hammer, Wrench, Paintbrush,
-  Book, Pencil, Flower, Leaf, Trees,
-  WashingMachine, Shirt,
-  Bath, ShowerHead,
-  List, Clipboard, ClipboardList, CheckSquare,
-  Home, Bed, Sofa, Lamp,
-  Package, Box, Layers,
-  type LucideIcon
-} from "lucide-react"
+  Hammer, Wrench, Screwdriver, PaintBrush,
+  Book, Pencil, Flower, Leaf,
+  WashingMachine, TShirt, Sneaker,
+  Bathtub, Shower,
+  List, Clipboard, ClipboardText, CheckSquare,
+  HouseLine, Bed, Couch, Lamp,
+  Package, Stack,
+  type Icon
+} from "@phosphor-icons/react"
 
-// Note: lucide-react has no Screwdriver icon; falling back to Wrench for "screwdriver" key.
-export const iconRegistry: Record<string, LucideIcon> = {
-  "shopping-cart": ShoppingCart, "shopping-bag": ShoppingBag, "utensils": Utensils,
-  "apple": Apple, "carrot": Carrot, "beef": Beef, "fish": Fish,
-  "milk": Milk, "coffee": Coffee, "wine": Wine, "beer": Beer,
-  "cookie": Cookie, "cake": Cake, "pizza": Pizza, "sandwich": Sandwich,
-  "refrigerator": Refrigerator, "snowflake": Snowflake,
+// Phosphor has no perfect equivalent for: apple, milk, beer, palm-tree, sandwich, refrigerator.
+// Picks below are the closest visually-honest fallback.
+export const iconRegistry: Record<string, Icon> = {
+  "shopping-cart": ShoppingCart, "shopping-bag": ShoppingBag, "utensils": ForkKnife,
+  "apple": Orange, "carrot": Carrot, "beef": Cow, "fish": Fish,
+  "milk": Drop, "coffee": Coffee, "wine": Wine, "beer": BeerBottle,
+  "cookie": Cookie, "cake": Cake, "pizza": Pizza, "sandwich": Hamburger,
+  "refrigerator": ThermometerCold, "snowflake": Snowflake,
   "thermometer": Thermometer, "flame": Flame,
-  "palm-tree": Palmtree, "sun": Sun, "umbrella": Umbrella, "tent": Tent,
-  "backpack": Backpack, "camera": Camera, "car": Car, "plane": Plane, "luggage": Luggage,
+  "palm-tree": Tree, "sun": Sun, "umbrella": Umbrella, "tent": Tent,
+  "backpack": Backpack, "camera": Camera, "car": Car, "plane": Airplane, "luggage": SuitcaseRolling,
   "briefcase": Briefcase, "gift": Gift, "heart": Heart, "star": Star,
   "pill": Pill, "syringe": Syringe, "baby": Baby, "dog": Dog, "cat": Cat,
-  "hammer": Hammer, "wrench": Wrench, "screwdriver": Wrench, "paintbrush": Paintbrush,
-  "book": Book, "pencil": Pencil, "flower": Flower, "leaf": Leaf, "trees": Trees,
-  "washing-machine": WashingMachine, "shirt": Shirt, "shoe": Shirt, // Lucide has no shoe icon
-  "bath": Bath, "shower-head": ShowerHead,
-  "list": List, "clipboard": Clipboard, "clipboard-list": ClipboardList, "check-square": CheckSquare,
-  "home": Home, "bed": Bed, "sofa": Sofa, "lamp": Lamp,
-  "package": Package, "box": Box, "layers": Layers
+  "hammer": Hammer, "wrench": Wrench, "screwdriver": Screwdriver, "paintbrush": PaintBrush,
+  "book": Book, "pencil": Pencil, "flower": Flower, "leaf": Leaf, "trees": Tree,
+  "washing-machine": WashingMachine, "shirt": TShirt, "shoe": Sneaker,
+  "bath": Bathtub, "shower-head": Shower,
+  "list": List, "clipboard": Clipboard, "clipboard-list": ClipboardText, "check-square": CheckSquare,
+  "home": HouseLine, "bed": Bed, "sofa": Couch, "lamp": Lamp,
+  "package": Package, "box": Package, "layers": Stack
 }
 
 export const iconKeys = Object.keys(iconRegistry).sort()
 
-export function getIcon(key: string): LucideIcon {
+export function getIcon(key: string): Icon {
   return iconRegistry[key] ?? Package
 }

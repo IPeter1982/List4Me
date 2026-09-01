@@ -1,25 +1,41 @@
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Archive, ArrowLeft, BookmarkSimple, Trash } from "@phosphor-icons/react"
+import { Archive, ArrowLeft, BookmarkSimple, DotsThreeVertical, Trash } from "@phosphor-icons/react"
 import { BottomNav } from "@/components/BottomNav"
-import { Button } from "@/components/ui/button"
 import { listsApi } from "./api"
 import { ProductPicker } from "./ProductPicker"
 import { ListItemRow } from "./ListItemRow"
 import { SaveAsTemplateDialog } from "@/features/templates/SaveAsTemplateDialog"
+import { categoriesApi } from "@/features/categories/api"
+import type { Category } from "@/features/categories/types"
+
+function findCategory(cats: Category[], id: string): Category | undefined {
+  for (const c of cats) {
+    if (c.id === id) return c
+    const sub = findCategory(c.subcategories ?? [], id)
+    if (sub) return sub
+  }
+  return undefined
+}
 
 export function ListView() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [saveTplOpen, setSaveTplOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [nameDraft, setNameDraft] = useState<string | null>(null)
 
   const listQuery = useQuery({
     queryKey: ["lists", "detail", id],
     queryFn: () => listsApi.get(id!),
     enabled: !!id,
+  })
+
+  const catsQuery = useQuery({
+    queryKey: ["categories"],
+    queryFn: categoriesApi.list,
   })
 
   const archive = useMutation({
@@ -45,7 +61,7 @@ export function ListView() {
 
   if (listQuery.isLoading) {
     return (
-      <div className="min-h-screen pb-20 p-6">
+      <div className="min-h-screen pb-28 p-6 bg-surface-bg text-ink">
         Betöltés…
         <BottomNav />
       </div>
@@ -54,7 +70,7 @@ export function ListView() {
   const list = listQuery.data
   if (!list) {
     return (
-      <div className="min-h-screen pb-20 p-6">
+      <div className="min-h-screen pb-28 p-6 bg-surface-bg text-ink">
         Nincs ilyen lista.
         <BottomNav />
       </div>
@@ -64,64 +80,72 @@ export function ListView() {
   const active = list.items.filter((i) => !i.isCompleted)
   const done = list.items.filter((i) => i.isCompleted)
   const currentName = nameDraft ?? list.name
+  const meta = `${list.items.length} tétel · ${active.length} nyitva`
+  const category = catsQuery.data ? findCategory(catsQuery.data, list.categoryId) : undefined
+  const completedLabel = category?.completedLabel ?? "Kész"
 
   return (
-    <div className="min-h-screen pb-20">
-      <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b dark:bg-neutral-900/90">
-        <div className="flex items-center gap-1 px-2 py-2">
-          <Button
-            variant="ghost"
+    <div className="flex flex-col min-h-screen bg-surface-bg text-ink">
+      <header className="shrink-0 bg-surface-bg z-10">
+        <div className="flex items-center gap-0.5 min-h-14 px-1.5">
+          <button
+            type="button"
             aria-label="Vissza"
             onClick={() => navigate("/lists")}
-            className="size-11 p-0"
+            className="grid place-items-center size-12 rounded-3xl text-ink hover:bg-surface-raised transition"
           >
-            <ArrowLeft size={20} weight="duotone" />
-          </Button>
-          <input
-            className="flex-1 bg-transparent text-lg font-semibold outline-none px-1 min-h-11"
-            value={currentName}
-            onChange={(e) => setNameDraft(e.target.value)}
-            onBlur={(e) => {
-              const next = e.target.value.trim()
-              if (next && next !== list.name) rename.mutate(next)
-              setNameDraft(null)
-            }}
-            aria-label="Lista neve"
-          />
-          <Button variant="ghost" aria-label="Sablonként mentés" onClick={() => setSaveTplOpen(true)} className="size-11 p-0">
-            <BookmarkSimple size={20} weight="duotone" />
-          </Button>
-          <Button variant="ghost" aria-label="Archiválás" onClick={() => archive.mutate()} className="size-11 p-0">
-            <Archive size={20} weight="duotone" />
-          </Button>
-          <Button
-            variant="ghost"
-            aria-label="Törlés"
-            onClick={() => {
-              if (confirm("Biztos törlöd a listát?")) del.mutate()
-            }}
-            className="size-11 p-0 text-danger"
+            <ArrowLeft size={22} weight="duotone" />
+          </button>
+          <div className="flex-1 min-w-0 flex flex-col">
+            <input
+              className="bg-transparent text-[19px] leading-tight font-medium tracking-tight outline-none px-1"
+              value={currentName}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onBlur={(e) => {
+                const next = e.target.value.trim()
+                if (next && next !== list.name) rename.mutate(next)
+                setNameDraft(null)
+              }}
+              aria-label="Lista neve"
+            />
+            <span className="text-xs text-ink-muted px-1">{meta}</span>
+          </div>
+          <button
+            type="button"
+            aria-label="Sablonként mentés"
+            onClick={() => setSaveTplOpen(true)}
+            className="grid place-items-center size-12 rounded-3xl text-ink hover:bg-surface-raised transition"
           >
-            <Trash size={20} weight="duotone" />
-          </Button>
+            <BookmarkSimple size={22} weight="duotone" />
+          </button>
+          <button
+            type="button"
+            aria-label="Menü"
+            onClick={() => setMenuOpen(true)}
+            className="grid place-items-center size-12 rounded-3xl text-ink hover:bg-surface-raised transition"
+          >
+            <DotsThreeVertical size={22} weight="duotone" />
+          </button>
         </div>
-        <div className="px-3 py-2 border-t bg-white dark:bg-neutral-900">
+        <div className="px-3 pb-3">
           <ProductPicker listId={list.id} categoryId={list.categoryId} />
         </div>
       </header>
 
-      <main className="px-2 py-2">
-        <ul className="divide-y">
+      <main className="flex-1 pb-28">
+        <ul>
           {active.map((i) => (
-            <ListItemRow key={i.id} listId={list.id} item={i} />
+            <ListItemRow key={i.id} listId={list.id} item={i} completedLabel={completedLabel} />
           ))}
         </ul>
         {done.length > 0 && (
           <>
-            <div className="px-3 py-2 mt-2 text-xs font-medium text-neutral-500">Kész</div>
-            <ul className="divide-y">
+            <div className="px-5 pt-4 pb-2 text-[12.5px] font-medium text-ink-muted">
+              {done.length} kész
+            </div>
+            <ul>
               {done.map((i) => (
-                <ListItemRow key={i.id} listId={list.id} item={i} />
+                <ListItemRow key={i.id} listId={list.id} item={i} completedLabel={completedLabel} />
               ))}
             </ul>
           </>
@@ -136,7 +160,54 @@ export function ListView() {
         />
       )}
 
+      {menuOpen && (
+        <ListMenuSheet
+          onClose={() => setMenuOpen(false)}
+          onArchive={() => { setMenuOpen(false); archive.mutate() }}
+          onDelete={() => {
+            if (confirm("Biztos törlöd a listát?")) { setMenuOpen(false); del.mutate() }
+          }}
+        />
+      )}
+
       <BottomNav />
+    </div>
+  )
+}
+
+function ListMenuSheet({
+  onClose, onArchive, onDelete
+}: {
+  onClose: () => void
+  onArchive: () => void
+  onDelete: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-40 grid place-items-end bg-black/40" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="w-full rounded-t-3xl bg-surface p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] space-y-1"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="mx-auto mb-3 h-1 w-8 rounded-full bg-line" />
+        <button
+          type="button"
+          onClick={onArchive}
+          className="w-full flex items-center gap-3 min-h-14 px-4 rounded-2xl hover:bg-surface-raised text-left"
+        >
+          <Archive size={22} weight="duotone" className="text-ink-muted" />
+          <span className="text-[15px]">Archiválás</span>
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="w-full flex items-center gap-3 min-h-14 px-4 rounded-2xl hover:bg-danger-soft text-left text-danger"
+        >
+          <Trash size={22} weight="duotone" />
+          <span className="text-[15px]">Törlés</span>
+        </button>
+      </div>
     </div>
   )
 }

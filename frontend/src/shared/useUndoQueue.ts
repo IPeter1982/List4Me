@@ -6,6 +6,7 @@ export type UndoEntry = {
   onCommit: () => void
   onUndo?: () => void
   scheduledAt: number
+  delayMs: number
   timeoutHandle: ReturnType<typeof setTimeout>
 }
 
@@ -33,7 +34,7 @@ export const useUndoQueue = create<State>((set, get) => ({
     set({
       entries: [
         ...get().entries,
-        { id, label, onCommit, onUndo, scheduledAt: Date.now(), timeoutHandle: handle },
+        { id, label, onCommit, onUndo, scheduledAt: Date.now(), delayMs, timeoutHandle: handle },
       ],
     })
   },

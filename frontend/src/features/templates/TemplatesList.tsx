@@ -26,7 +26,10 @@ export function TemplatesList() {
   })
 
   return (
-    <PageShell title="Sablonok">
+    <PageShell
+      title="Sablonok"
+      subtitle="Mentett listák, egy koppintással új listaként"
+    >
       {tplQuery.isLoading && <div className="text-neutral-500">Betöltés…</div>}
       {tplQuery.data && tplQuery.data.length === 0 && (
         <p className="p-6 text-center text-neutral-500">

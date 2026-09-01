@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { IconPicker } from "./IconPicker"
 import { categoriesApi } from "./api"
 import type { Category } from "./types"
@@ -32,13 +30,11 @@ export function CategoryEditor({ open, onOpenChange, category, parentCategoryId 
   const save = useMutation({
     mutationFn: async () => {
       if (isEdit) {
-        await categoriesApi.update(category!.id, {
-          name, iconKey, completedLabel
-        })
+        await categoriesApi.update(category!.id, { name, iconKey, completedLabel })
       } else {
         await categoriesApi.create({
           name, iconKey, completedLabel,
-          parentCategoryId: parentCategoryId ?? null
+          parentCategoryId: parentCategoryId ?? null,
         })
       }
     },
@@ -49,34 +45,57 @@ export function CategoryEditor({ open, onOpenChange, category, parentCategoryId 
   })
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogTitle>{isEdit ? "Kategória szerkesztése" : "Új kategória"}</DialogTitle>
-        <div className="space-y-3">
-          <div>
-            <label htmlFor="category-name" className="block text-sm mb-1">Név</label>
-            <Input id="category-name" value={name} onChange={e => setName(e.target.value)} />
-          </div>
-          <div>
-            <label className="block text-sm mb-1">Ikon</label>
-            <IconPicker value={iconKey} onChange={setIconKey} />
-          </div>
-          <div>
-            <label htmlFor="category-completed-label" className="block text-sm mb-1">"Készre jelölve" címke</label>
-            <Input id="category-completed-label" value={completedLabel} onChange={e => setCompletedLabel(e.target.value)}
-                   placeholder="Pl. Megvettem / Elfogyott / Bepakolva" />
-          </div>
-          <div className="flex gap-2 pt-2">
-            <Button variant="ghost" onClick={() => onOpenChange(false)} className="flex-1">Mégse</Button>
-            <Button
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent aria-describedby={undefined}>
+        <SheetTitle>{isEdit ? "Kategória szerkesztése" : "Új kategória"}</SheetTitle>
+        <p className="text-[13.5px] text-ink-muted mt-1 mb-4">
+          Válassz ikont, adj nevet, és jelöld meg a „készre" címkét.
+        </p>
+
+        <div className="flex flex-col gap-4">
+          <IconPicker value={iconKey} onChange={setIconKey} />
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12.5px] text-ink-muted">Kategória neve</span>
+            <input
+              autoFocus={!isEdit}
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="pl. Kamra"
+              className="min-h-14 px-4 rounded-2xl border border-line bg-surface-raised text-[16px] text-ink outline-none focus:border-brand"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12.5px] text-ink-muted">„Készre jelölve" címke</span>
+            <input
+              value={completedLabel}
+              onChange={e => setCompletedLabel(e.target.value)}
+              placeholder="Pl. Megvettem / Elfogyott / Bepakolva"
+              className="min-h-14 px-4 rounded-2xl border border-line bg-surface-raised text-[16px] text-ink outline-none focus:border-brand"
+            />
+          </label>
+
+          <div className="flex gap-2.5 mt-2">
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="flex-1 min-h-[52px] rounded-[26px] border border-line text-[15px] font-medium text-ink active:bg-surface-raised"
+            >
+              Mégse
+            </button>
+            <button
+              type="button"
               onClick={() => save.mutate()}
               disabled={!name.trim() || save.isPending}
-              className="flex-1"
-            >{isEdit ? "Mentés" : "Létrehoz"}</Button>
+              className="flex-[1.4] min-h-[52px] rounded-[26px] bg-brand text-brand-on text-[15px] font-medium disabled:opacity-60 active:scale-[.98]"
+            >
+              {isEdit ? "Mentés" : "Létrehozás"}
+            </button>
           </div>
           {save.isError && <p className="text-danger text-sm">Hiba: {(save.error as Error).message}</p>}
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }
